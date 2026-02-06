@@ -57,3 +57,27 @@ func TestLoad_OverridesFromEnv(t *testing.T) {
 		t.Errorf("got http port %d", cfg.MCP.HTTPPort)
 	}
 }
+
+func TestLoad_PolicyFileEnv(t *testing.T) {
+	t.Setenv("GRANOLA_MCP_POLICY_FILE", "/etc/granola/policy.yaml")
+
+	cfg := config.Load()
+
+	if !cfg.Policy.Enabled {
+		t.Error("expected policy enabled when file path is set")
+	}
+	if cfg.Policy.FilePath != "/etc/granola/policy.yaml" {
+		t.Errorf("got policy file %q", cfg.Policy.FilePath)
+	}
+}
+
+func TestDefault_PolicyDisabled(t *testing.T) {
+	cfg := config.Default()
+
+	if cfg.Policy.Enabled {
+		t.Error("expected policy disabled by default")
+	}
+	if cfg.Policy.FilePath != "" {
+		t.Errorf("got policy file %q, want empty", cfg.Policy.FilePath)
+	}
+}

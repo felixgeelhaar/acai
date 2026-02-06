@@ -6,8 +6,11 @@ import (
 	"testing"
 	"time"
 
+	annotationapp "github.com/felixgeelhaar/granola-mcp/internal/application/annotation"
+	embeddingapp "github.com/felixgeelhaar/granola-mcp/internal/application/embedding"
 	meetingapp "github.com/felixgeelhaar/granola-mcp/internal/application/meeting"
 	workspaceapp "github.com/felixgeelhaar/granola-mcp/internal/application/workspace"
+	annotatn "github.com/felixgeelhaar/granola-mcp/internal/domain/annotation"
 	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
 	"github.com/felixgeelhaar/granola-mcp/internal/domain/workspace"
 	mcpiface "github.com/felixgeelhaar/granola-mcp/internal/interfaces/mcp"
@@ -293,29 +296,113 @@ func (m *mockWorkspaceRepo) FindByID(_ context.Context, id workspace.WorkspaceID
 	return nil, workspace.ErrWorkspaceNotFound
 }
 
-func newTestServer(repo *mockRepo) *mcpiface.Server {
+// mockNoteRepo implements annotation.NoteRepository for tests.
+type mockNoteRepo struct {
+	notes map[annotatn.NoteID]*annotatn.AgentNote
+}
+
+func newMockNoteRepo() *mockNoteRepo {
+	return &mockNoteRepo{notes: make(map[annotatn.NoteID]*annotatn.AgentNote)}
+}
+
+func (m *mockNoteRepo) Save(_ context.Context, note *annotatn.AgentNote) error {
+	m.notes[note.ID()] = note
+	return nil
+}
+
+func (m *mockNoteRepo) FindByID(_ context.Context, id annotatn.NoteID) (*annotatn.AgentNote, error) {
+	note, ok := m.notes[id]
+	if !ok {
+		return nil, annotatn.ErrNoteNotFound
+	}
+	return note, nil
+}
+
+func (m *mockNoteRepo) ListByMeeting(_ context.Context, meetingID string) ([]*annotatn.AgentNote, error) {
+	var result []*annotatn.AgentNote
+	for _, note := range m.notes {
+		if note.MeetingID() == meetingID {
+			result = append(result, note)
+		}
+	}
+	if result == nil {
+		result = []*annotatn.AgentNote{}
+	}
+	return result, nil
+}
+
+func (m *mockNoteRepo) Delete(_ context.Context, id annotatn.NoteID) error {
+	if _, ok := m.notes[id]; !ok {
+		return annotatn.ErrNoteNotFound
+	}
+	delete(m.notes, id)
+	return nil
+}
+
+// mockWriteRepo implements domain.WriteRepository for tests.
+type mockWriteRepo struct {
+	items map[domain.ActionItemID]*domain.ActionItem
+}
+
+func newMockWriteRepo() *mockWriteRepo {
+	return &mockWriteRepo{items: make(map[domain.ActionItemID]*domain.ActionItem)}
+}
+
+func (m *mockWriteRepo) SaveActionItemState(_ context.Context, item *domain.ActionItem) error {
+	m.items[item.ID()] = item
+	return nil
+}
+
+func (m *mockWriteRepo) GetLocalActionItemState(_ context.Context, id domain.ActionItemID) (*domain.ActionItem, error) {
+	item, ok := m.items[id]
+	if !ok {
+		return nil, domain.ErrMeetingNotFound
+	}
+	return item, nil
+}
+
+// mockDispatcher captures dispatched events.
+type mockDispatcher struct {
+	events []domain.DomainEvent
+}
+
+func (m *mockDispatcher) Dispatch(_ context.Context, events []domain.DomainEvent) error {
+	m.events = append(m.events, events...)
+	return nil
+}
+
+func testDeps(repo *mockRepo) (mcpiface.ServerOptions, *mockNoteRepo, *mockWriteRepo) {
 	wsRepo := &mockWorkspaceRepo{}
-	return mcpiface.NewServer("granola-mcp", "test", mcpiface.ServerOptions{
-		ListMeetings:      meetingapp.NewListMeetings(repo),
-		GetMeeting:        meetingapp.NewGetMeeting(repo),
-		GetTranscript:     meetingapp.NewGetTranscript(repo),
-		SearchTranscripts: meetingapp.NewSearchTranscripts(repo),
-		GetActionItems:    meetingapp.NewGetActionItems(repo),
-		GetMeetingStats:   meetingapp.NewGetMeetingStats(repo),
-		ListWorkspaces:    workspaceapp.NewListWorkspaces(wsRepo),
-		GetWorkspace:      workspaceapp.NewGetWorkspace(wsRepo),
-	})
+	noteRepo := newMockNoteRepo()
+	writeRepo := newMockWriteRepo()
+	dispatcher := &mockDispatcher{}
+
+	return mcpiface.ServerOptions{
+		ListMeetings:       meetingapp.NewListMeetings(repo),
+		GetMeeting:         meetingapp.NewGetMeeting(repo),
+		GetTranscript:      meetingapp.NewGetTranscript(repo),
+		SearchTranscripts:  meetingapp.NewSearchTranscripts(repo),
+		GetActionItems:     meetingapp.NewGetActionItems(repo),
+		GetMeetingStats:    meetingapp.NewGetMeetingStats(repo),
+		ListWorkspaces:     workspaceapp.NewListWorkspaces(wsRepo),
+		GetWorkspace:       workspaceapp.NewGetWorkspace(wsRepo),
+		AddNote:            annotationapp.NewAddNote(noteRepo, repo, dispatcher),
+		ListNotes:          annotationapp.NewListNotes(noteRepo),
+		DeleteNote:         annotationapp.NewDeleteNote(noteRepo, dispatcher),
+		CompleteActionItem: meetingapp.NewCompleteActionItem(repo, writeRepo, dispatcher),
+		UpdateActionItem:   meetingapp.NewUpdateActionItem(repo, writeRepo, dispatcher),
+		ExportEmbeddings:   embeddingapp.NewExportEmbeddings(repo, noteRepo),
+	}, noteRepo, writeRepo
+}
+
+func newTestServer(repo *mockRepo) *mcpiface.Server {
+	opts, _, _ := testDeps(repo)
+	return mcpiface.NewServer("granola-mcp", "test", opts)
 }
 
 func newTestServerWithWorkspaces(repo *mockRepo, wsRepo *mockWorkspaceRepo) *mcpiface.Server {
-	return mcpiface.NewServer("granola-mcp", "test", mcpiface.ServerOptions{
-		ListMeetings:      meetingapp.NewListMeetings(repo),
-		GetMeeting:        meetingapp.NewGetMeeting(repo),
-		GetTranscript:     meetingapp.NewGetTranscript(repo),
-		SearchTranscripts: meetingapp.NewSearchTranscripts(repo),
-		GetActionItems:    meetingapp.NewGetActionItems(repo),
-		GetMeetingStats:   meetingapp.NewGetMeetingStats(repo),
-		ListWorkspaces:    workspaceapp.NewListWorkspaces(wsRepo),
-		GetWorkspace:      workspaceapp.NewGetWorkspace(wsRepo),
-	})
+	opts, _, _ := testDeps(repo)
+	opts.ListWorkspaces = workspaceapp.NewListWorkspaces(wsRepo)
+	opts.GetWorkspace = workspaceapp.NewGetWorkspace(wsRepo)
+	return mcpiface.NewServer("granola-mcp", "test", opts)
 }

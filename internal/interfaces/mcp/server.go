@@ -12,8 +12,11 @@ import (
 
 	mcpfw "github.com/felixgeelhaar/mcp-go"
 
+	annotationapp "github.com/felixgeelhaar/granola-mcp/internal/application/annotation"
+	embeddingapp "github.com/felixgeelhaar/granola-mcp/internal/application/embedding"
 	meetingapp "github.com/felixgeelhaar/granola-mcp/internal/application/meeting"
 	workspaceapp "github.com/felixgeelhaar/granola-mcp/internal/application/workspace"
+	"github.com/felixgeelhaar/granola-mcp/internal/domain/annotation"
 	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
 	"github.com/felixgeelhaar/granola-mcp/internal/domain/workspace"
 )
@@ -28,6 +31,16 @@ type ServerOptions struct {
 	GetMeetingStats   *meetingapp.GetMeetingStats
 	ListWorkspaces    *workspaceapp.ListWorkspaces
 	GetWorkspace      *workspaceapp.GetWorkspace
+
+	// Write use cases (Phase 3)
+	AddNote            *annotationapp.AddNote
+	ListNotes          *annotationapp.ListNotes
+	DeleteNote         *annotationapp.DeleteNote
+	CompleteActionItem *meetingapp.CompleteActionItem
+	UpdateActionItem   *meetingapp.UpdateActionItem
+
+	// Embedding export (Phase 3)
+	ExportEmbeddings *embeddingapp.ExportEmbeddings
 }
 
 // Server wraps the mcp-go server and exposes Granola meeting data
@@ -44,6 +57,16 @@ type Server struct {
 	listWorkspaces    *workspaceapp.ListWorkspaces
 	getWorkspace      *workspaceapp.GetWorkspace
 
+	// Write use cases (Phase 3)
+	addNote            *annotationapp.AddNote
+	listNotes          *annotationapp.ListNotes
+	deleteNote         *annotationapp.DeleteNote
+	completeActionItem *meetingapp.CompleteActionItem
+	updateActionItem   *meetingapp.UpdateActionItem
+
+	// Embedding export (Phase 3)
+	exportEmbeddings *embeddingapp.ExportEmbeddings
+
 	name    string
 	version string
 }
@@ -51,16 +74,22 @@ type Server struct {
 // NewServer creates a new MCP server wired to application use cases.
 func NewServer(name, version string, opts ServerOptions) *Server {
 	s := &Server{
-		name:              name,
-		version:           version,
-		listMeetings:      opts.ListMeetings,
-		getMeeting:        opts.GetMeeting,
-		getTranscript:     opts.GetTranscript,
-		searchTranscripts: opts.SearchTranscripts,
-		getActionItems:    opts.GetActionItems,
-		getMeetingStats:   opts.GetMeetingStats,
-		listWorkspaces:    opts.ListWorkspaces,
-		getWorkspace:      opts.GetWorkspace,
+		name:               name,
+		version:            version,
+		listMeetings:       opts.ListMeetings,
+		getMeeting:         opts.GetMeeting,
+		getTranscript:      opts.GetTranscript,
+		searchTranscripts:  opts.SearchTranscripts,
+		getActionItems:     opts.GetActionItems,
+		getMeetingStats:    opts.GetMeetingStats,
+		listWorkspaces:     opts.ListWorkspaces,
+		getWorkspace:       opts.GetWorkspace,
+		addNote:            opts.AddNote,
+		listNotes:          opts.ListNotes,
+		deleteNote:         opts.DeleteNote,
+		completeActionItem: opts.CompleteActionItem,
+		updateActionItem:   opts.UpdateActionItem,
+		exportEmbeddings:   opts.ExportEmbeddings,
 	}
 
 	srv := mcpfw.NewServer(mcpfw.ServerInfo{
@@ -158,6 +187,38 @@ func (s *Server) registerTools(srv *mcpfw.Server) {
 			Description("List all Granola workspaces").
 			Handler(s.HandleListWorkspaces)
 	}
+
+	// Write tools (Phase 3)
+	if s.addNote != nil {
+		srv.Tool("add_note").
+			Description("Add an agent note to a meeting").
+			Handler(s.HandleAddNote)
+	}
+	if s.listNotes != nil {
+		srv.Tool("list_notes").
+			Description("List agent notes for a meeting").
+			Handler(s.HandleListNotes)
+	}
+	if s.deleteNote != nil {
+		srv.Tool("delete_note").
+			Description("Delete an agent note").
+			Handler(s.HandleDeleteNote)
+	}
+	if s.completeActionItem != nil {
+		srv.Tool("complete_action_item").
+			Description("Mark an action item as completed").
+			Handler(s.HandleCompleteActionItem)
+	}
+	if s.updateActionItem != nil {
+		srv.Tool("update_action_item").
+			Description("Update an action item's text").
+			Handler(s.HandleUpdateActionItem)
+	}
+	if s.exportEmbeddings != nil {
+		srv.Tool("export_embeddings").
+			Description("Export meeting content as chunks for embedding generation (JSONL format)").
+			Handler(s.HandleExportEmbeddings)
+	}
 }
 
 // --- Resource registration ---
@@ -216,6 +277,32 @@ func (s *Server) registerResources(srv *mcpfw.Server) {
 				Text:     string(data),
 			}, nil
 		})
+
+	if s.listNotes != nil {
+		srv.Resource("note://{meeting_id}").
+			Name("Agent Notes").
+			Description("Agent notes for a meeting").
+			MimeType("application/json").
+			Handler(func(ctx context.Context, uri string, params map[string]string) (*mcpfw.ResourceContent, error) {
+				meetingID := params["meeting_id"]
+				out, err := s.listNotes.Execute(ctx, annotationapp.ListNotesInput{
+					MeetingID: meetingID,
+				})
+				if err != nil {
+					return nil, err
+				}
+				results := make([]NoteResult, len(out.Notes))
+				for i, n := range out.Notes {
+					results[i] = toNoteResult(n)
+				}
+				data, _ := json.Marshal(results)
+				return &mcpfw.ResourceContent{
+					URI:      uri,
+					MimeType: "application/json",
+					Text:     string(data),
+				}, nil
+			})
+	}
 
 	if s.getWorkspace != nil {
 		srv.Resource("workspace://{id}").
@@ -587,6 +674,72 @@ func (s *Server) HandleToolJSON(ctx context.Context, tool string, rawInput json.
 		}
 		return json.Marshal(result)
 
+	case "add_note":
+		var input AddNoteToolInput
+		if err := json.Unmarshal(rawInput, &input); err != nil {
+			return nil, fmt.Errorf("invalid input: %w", err)
+		}
+		result, err := s.HandleAddNote(ctx, input)
+		if err != nil {
+			return nil, err
+		}
+		return json.Marshal(result)
+
+	case "list_notes":
+		var input ListNotesToolInput
+		if err := json.Unmarshal(rawInput, &input); err != nil {
+			return nil, fmt.Errorf("invalid input: %w", err)
+		}
+		result, err := s.HandleListNotes(ctx, input)
+		if err != nil {
+			return nil, err
+		}
+		return json.Marshal(result)
+
+	case "delete_note":
+		var input DeleteNoteToolInput
+		if err := json.Unmarshal(rawInput, &input); err != nil {
+			return nil, fmt.Errorf("invalid input: %w", err)
+		}
+		result, err := s.HandleDeleteNote(ctx, input)
+		if err != nil {
+			return nil, err
+		}
+		return json.Marshal(result)
+
+	case "complete_action_item":
+		var input CompleteActionItemToolInput
+		if err := json.Unmarshal(rawInput, &input); err != nil {
+			return nil, fmt.Errorf("invalid input: %w", err)
+		}
+		result, err := s.HandleCompleteActionItem(ctx, input)
+		if err != nil {
+			return nil, err
+		}
+		return json.Marshal(result)
+
+	case "update_action_item":
+		var input UpdateActionItemToolInput
+		if err := json.Unmarshal(rawInput, &input); err != nil {
+			return nil, fmt.Errorf("invalid input: %w", err)
+		}
+		result, err := s.HandleUpdateActionItem(ctx, input)
+		if err != nil {
+			return nil, err
+		}
+		return json.Marshal(result)
+
+	case "export_embeddings":
+		var input ExportEmbeddingsToolInput
+		if err := json.Unmarshal(rawInput, &input); err != nil {
+			return nil, fmt.Errorf("invalid input: %w", err)
+		}
+		result, err := s.HandleExportEmbeddings(ctx, input)
+		if err != nil {
+			return nil, err
+		}
+		return json.Marshal(result)
+
 	default:
 		return nil, fmt.Errorf("unknown tool: %s", tool)
 	}
@@ -669,4 +822,152 @@ func toWorkspaceResult(ws *workspace.Workspace) WorkspaceResult {
 		Name: ws.Name(),
 		Slug: ws.Slug(),
 	}
+}
+
+// --- Embedding Export Tool Input Type ---
+
+type ExportEmbeddingsToolInput struct {
+	MeetingIDs []string `json:"meeting_ids"`
+	Strategy   string   `json:"strategy,omitempty"`
+	MaxTokens  int      `json:"max_tokens,omitempty"`
+}
+
+type ExportEmbeddingsResult struct {
+	Content    string `json:"content"`
+	ChunkCount int    `json:"chunk_count"`
+	Format     string `json:"format"`
+}
+
+// --- Write Tool Input Types (Phase 3) ---
+
+type AddNoteToolInput struct {
+	MeetingID string `json:"meeting_id"`
+	Author    string `json:"author"`
+	Content   string `json:"content"`
+}
+
+type ListNotesToolInput struct {
+	MeetingID string `json:"meeting_id"`
+}
+
+type DeleteNoteToolInput struct {
+	NoteID string `json:"note_id"`
+}
+
+type CompleteActionItemToolInput struct {
+	MeetingID    string `json:"meeting_id"`
+	ActionItemID string `json:"action_item_id"`
+}
+
+type UpdateActionItemToolInput struct {
+	MeetingID    string `json:"meeting_id"`
+	ActionItemID string `json:"action_item_id"`
+	Text         string `json:"text"`
+}
+
+// --- Write Tool Output Types ---
+
+type NoteResult struct {
+	ID        string `json:"id"`
+	MeetingID string `json:"meeting_id"`
+	Author    string `json:"author"`
+	Content   string `json:"content"`
+	CreatedAt string `json:"created_at"`
+}
+
+func toNoteResult(n *annotation.AgentNote) NoteResult {
+	return NoteResult{
+		ID:        string(n.ID()),
+		MeetingID: n.MeetingID(),
+		Author:    n.Author(),
+		Content:   n.Content(),
+		CreatedAt: n.CreatedAt().Format(time.RFC3339),
+	}
+}
+
+// --- Write Tool Handlers ---
+
+func (s *Server) HandleAddNote(ctx context.Context, input AddNoteToolInput) (*NoteResult, error) {
+	out, err := s.addNote.Execute(ctx, annotationapp.AddNoteInput{
+		MeetingID: input.MeetingID,
+		Author:    input.Author,
+		Content:   input.Content,
+	})
+	if err != nil {
+		return nil, err
+	}
+	result := toNoteResult(out.Note)
+	return &result, nil
+}
+
+func (s *Server) HandleListNotes(ctx context.Context, input ListNotesToolInput) ([]NoteResult, error) {
+	out, err := s.listNotes.Execute(ctx, annotationapp.ListNotesInput{
+		MeetingID: input.MeetingID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	results := make([]NoteResult, len(out.Notes))
+	for i, n := range out.Notes {
+		results[i] = toNoteResult(n)
+	}
+	return results, nil
+}
+
+func (s *Server) HandleDeleteNote(ctx context.Context, input DeleteNoteToolInput) (*struct{}, error) {
+	_, err := s.deleteNote.Execute(ctx, annotationapp.DeleteNoteInput{
+		NoteID: input.NoteID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &struct{}{}, nil
+}
+
+func (s *Server) HandleCompleteActionItem(ctx context.Context, input CompleteActionItemToolInput) (*ActionItemResult, error) {
+	out, err := s.completeActionItem.Execute(ctx, meetingapp.CompleteActionItemInput{
+		MeetingID:    domain.MeetingID(input.MeetingID),
+		ActionItemID: domain.ActionItemID(input.ActionItemID),
+	})
+	if err != nil {
+		return nil, err
+	}
+	result := toActionItemResult(out.Item)
+	return &result, nil
+}
+
+func (s *Server) HandleUpdateActionItem(ctx context.Context, input UpdateActionItemToolInput) (*ActionItemResult, error) {
+	out, err := s.updateActionItem.Execute(ctx, meetingapp.UpdateActionItemInput{
+		MeetingID:    domain.MeetingID(input.MeetingID),
+		ActionItemID: domain.ActionItemID(input.ActionItemID),
+		Text:         input.Text,
+	})
+	if err != nil {
+		return nil, err
+	}
+	result := toActionItemResult(out.Item)
+	return &result, nil
+}
+
+func (s *Server) HandleExportEmbeddings(ctx context.Context, input ExportEmbeddingsToolInput) (*ExportEmbeddingsResult, error) {
+	meetingIDs := make([]domain.MeetingID, len(input.MeetingIDs))
+	for i, id := range input.MeetingIDs {
+		meetingIDs[i] = domain.MeetingID(id)
+	}
+
+	out, err := s.exportEmbeddings.Execute(ctx, embeddingapp.ExportEmbeddingsInput{
+		MeetingIDs: meetingIDs,
+		Strategy:   input.Strategy,
+		MaxTokens:  input.MaxTokens,
+		Format:     "jsonl",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &ExportEmbeddingsResult{
+		Content:    out.Content,
+		ChunkCount: out.ChunkCount,
+		Format:     "jsonl",
+	}, nil
 }

@@ -76,3 +76,44 @@ func TestActionItem_CompleteIdempotent(t *testing.T) {
 		t.Error("action item should still be completed")
 	}
 }
+
+func TestActionItem_Uncomplete(t *testing.T) {
+	item, _ := meeting.NewActionItem("ai-1", "m-1", "Alice", "Write report", nil)
+	item.Complete()
+	item.Uncomplete()
+
+	if item.IsCompleted() {
+		t.Error("action item should not be completed after Uncomplete()")
+	}
+}
+
+func TestActionItem_UncompleteIdempotent(t *testing.T) {
+	item, _ := meeting.NewActionItem("ai-1", "m-1", "Alice", "Write report", nil)
+	item.Uncomplete() // already not completed
+
+	if item.IsCompleted() {
+		t.Error("action item should not be completed")
+	}
+}
+
+func TestActionItem_UpdateText(t *testing.T) {
+	item, _ := meeting.NewActionItem("ai-1", "m-1", "Alice", "Write report", nil)
+	err := item.UpdateText("Updated report")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if item.Text() != "Updated report" {
+		t.Errorf("got text %q, want %q", item.Text(), "Updated report")
+	}
+}
+
+func TestActionItem_UpdateText_RejectsEmpty(t *testing.T) {
+	item, _ := meeting.NewActionItem("ai-1", "m-1", "Alice", "Write report", nil)
+	err := item.UpdateText("")
+	if err != meeting.ErrInvalidActionItemText {
+		t.Errorf("got error %v, want %v", err, meeting.ErrInvalidActionItemText)
+	}
+	if item.Text() != "Write report" {
+		t.Error("text should be unchanged after rejected update")
+	}
+}

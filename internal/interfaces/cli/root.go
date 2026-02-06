@@ -27,6 +27,8 @@ func NewRootCmd(deps *Dependencies) *cobra.Command {
 		newExportCmd(deps),
 		newServeCmd(deps),
 		newWorkspaceCmd(deps),
+		newNoteCmd(deps),
+		newActionCmd(deps),
 		newVersionCmd(),
 	)
 

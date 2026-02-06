@@ -59,7 +59,22 @@ func (d *Dispatcher) dispatchEvent(event domain.DomainEvent) {
 			log.Printf("event dispatch: notify resource updated %q: %v", uri, err)
 		}
 
+	case domain.ActionItemCompleted:
+		uri := fmt.Sprintf("meeting://%s", e.MeetingID())
+		if err := d.notifier.NotifyResourceUpdated(uri); err != nil {
+			log.Printf("event dispatch: notify resource updated %q: %v", uri, err)
+		}
+
+	case domain.ActionItemUpdated:
+		uri := fmt.Sprintf("meeting://%s", e.MeetingID())
+		if err := d.notifier.NotifyResourceUpdated(uri); err != nil {
+			log.Printf("event dispatch: notify resource updated %q: %v", uri, err)
+		}
+
 	default:
+		// Annotation events and other unknown types — log but don't fail.
+		// Annotation events (note.added, note.deleted) trigger note resource updates
+		// via the note://{meeting_id} URI pattern, handled at the interface level.
 		log.Printf("event dispatch: unknown event type %q", event.EventName())
 	}
 }

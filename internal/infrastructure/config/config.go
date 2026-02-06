@@ -15,6 +15,7 @@ type Config struct {
 	Cache      CacheConfig
 	Resilience ResilienceConfig
 	Privacy    PrivacyConfig
+	Policy     PolicyConfig
 	Sync       SyncConfig
 	Logging    LoggingConfig
 	Webhook    WebhookConfig
@@ -74,6 +75,11 @@ type PrivacyConfig struct {
 	LocalOnly      bool
 }
 
+type PolicyConfig struct {
+	Enabled  bool
+	FilePath string
+}
+
 type SyncConfig struct {
 	PollingInterval time.Duration
 	AutoSync        bool
@@ -115,6 +121,10 @@ func Load() *Config {
 	}
 	if v := os.Getenv("GRANOLA_MCP_WEBHOOK_SECRET"); v != "" {
 		cfg.Webhook.Secret = v
+	}
+	if v := os.Getenv("GRANOLA_MCP_POLICY_FILE"); v != "" {
+		cfg.Policy.FilePath = v
+		cfg.Policy.Enabled = true
 	}
 
 	return cfg

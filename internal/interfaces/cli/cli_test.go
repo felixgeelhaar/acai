@@ -7,10 +7,13 @@ import (
 	"testing"
 	"time"
 
+	annotationapp "github.com/felixgeelhaar/granola-mcp/internal/application/annotation"
 	authapp "github.com/felixgeelhaar/granola-mcp/internal/application/auth"
+	embeddingapp "github.com/felixgeelhaar/granola-mcp/internal/application/embedding"
 	exportapp "github.com/felixgeelhaar/granola-mcp/internal/application/export"
 	meetingapp "github.com/felixgeelhaar/granola-mcp/internal/application/meeting"
 	workspaceapp "github.com/felixgeelhaar/granola-mcp/internal/application/workspace"
+	"github.com/felixgeelhaar/granola-mcp/internal/domain/annotation"
 	domainauth "github.com/felixgeelhaar/granola-mcp/internal/domain/auth"
 	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
 	"github.com/felixgeelhaar/granola-mcp/internal/domain/workspace"
@@ -22,7 +25,7 @@ func TestRootCmd_HasExpectedSubcommands(t *testing.T) {
 	deps := testDeps(t)
 	root := cli.NewRootCmd(deps)
 
-	expected := []string{"auth", "sync", "list", "export", "serve", "workspace", "version"}
+	expected := []string{"auth", "sync", "list", "export", "serve", "workspace", "note", "action", "version"}
 	for _, name := range expected {
 		found := false
 		for _, cmd := range root.Commands() {
@@ -189,7 +192,8 @@ func (m *mockMeetingRepo) SearchTranscripts(_ context.Context, _ string, _ domai
 	return nil, nil
 }
 func (m *mockMeetingRepo) GetActionItems(_ context.Context, _ domain.MeetingID) ([]*domain.ActionItem, error) {
-	return nil, nil
+	ai, _ := domain.NewActionItem("ai-1", "m-1", "Alice", "Review PR", nil)
+	return []*domain.ActionItem{ai}, nil
 }
 func (m *mockMeetingRepo) Sync(_ context.Context, _ *time.Time) ([]domain.DomainEvent, error) {
 	return []domain.DomainEvent{}, nil
@@ -212,11 +216,62 @@ func (m *mockWorkspaceRepo) FindByID(_ context.Context, id workspace.WorkspaceID
 	return nil, workspace.ErrWorkspaceNotFound
 }
 
+type mockNoteRepo struct {
+	notes []*annotation.AgentNote
+}
+
+func (m *mockNoteRepo) Save(_ context.Context, note *annotation.AgentNote) error {
+	m.notes = append(m.notes, note)
+	return nil
+}
+func (m *mockNoteRepo) FindByID(_ context.Context, id annotation.NoteID) (*annotation.AgentNote, error) {
+	for _, n := range m.notes {
+		if n.ID() == id {
+			return n, nil
+		}
+	}
+	return nil, annotation.ErrNoteNotFound
+}
+func (m *mockNoteRepo) ListByMeeting(_ context.Context, meetingID string) ([]*annotation.AgentNote, error) {
+	var result []*annotation.AgentNote
+	for _, n := range m.notes {
+		if n.MeetingID() == meetingID {
+			result = append(result, n)
+		}
+	}
+	return result, nil
+}
+func (m *mockNoteRepo) Delete(_ context.Context, id annotation.NoteID) error {
+	for i, n := range m.notes {
+		if n.ID() == id {
+			m.notes = append(m.notes[:i], m.notes[i+1:]...)
+			return nil
+		}
+	}
+	return annotation.ErrNoteNotFound
+}
+
+type mockWriteRepo struct{}
+
+func (m *mockWriteRepo) SaveActionItemState(_ context.Context, _ *domain.ActionItem) error {
+	return nil
+}
+func (m *mockWriteRepo) GetLocalActionItemState(_ context.Context, _ domain.ActionItemID) (*domain.ActionItem, error) {
+	return nil, domain.ErrMeetingNotFound
+}
+
+type mockDispatcher struct{}
+
+func (m *mockDispatcher) Dispatch(_ context.Context, _ []domain.DomainEvent) error { return nil }
+
 func testDeps(t *testing.T) *cli.Dependencies {
 	t.Helper()
 	repo := &mockMeetingRepo{}
 	authSvc := &mockAuthService{}
 	wsRepo := &mockWorkspaceRepo{}
+	noteRepo := &mockNoteRepo{}
+	writeRepo := &mockWriteRepo{}
+	dispatcher := &mockDispatcher{}
 	buf := new(bytes.Buffer)
 
 	return &cli.Dependencies{
@@ -231,6 +286,12 @@ func testDeps(t *testing.T) *cli.Dependencies {
 		CheckStatus:       authapp.NewCheckStatus(authSvc),
 		ListWorkspaces:    workspaceapp.NewListWorkspaces(wsRepo),
 		GetWorkspace:      workspaceapp.NewGetWorkspace(wsRepo),
+		AddNote:           annotationapp.NewAddNote(noteRepo, repo, dispatcher),
+		ListNotes:         annotationapp.NewListNotes(noteRepo),
+		DeleteNote:        annotationapp.NewDeleteNote(noteRepo, dispatcher),
+		CompleteActionItem: meetingapp.NewCompleteActionItem(repo, writeRepo, dispatcher),
+		UpdateActionItem:   meetingapp.NewUpdateActionItem(repo, writeRepo, dispatcher),
+		ExportEmbeddings:   embeddingapp.NewExportEmbeddings(repo, noteRepo),
 		MCPServer: mcpiface.NewServer("granola-mcp", "test", mcpiface.ServerOptions{
 			ListMeetings:      meetingapp.NewListMeetings(repo),
 			GetMeeting:        meetingapp.NewGetMeeting(repo),
@@ -240,6 +301,12 @@ func testDeps(t *testing.T) *cli.Dependencies {
 			GetMeetingStats:   meetingapp.NewGetMeetingStats(repo),
 			ListWorkspaces:    workspaceapp.NewListWorkspaces(wsRepo),
 			GetWorkspace:      workspaceapp.NewGetWorkspace(wsRepo),
+			AddNote:           annotationapp.NewAddNote(noteRepo, repo, dispatcher),
+			ListNotes:         annotationapp.NewListNotes(noteRepo),
+			DeleteNote:        annotationapp.NewDeleteNote(noteRepo, dispatcher),
+			CompleteActionItem: meetingapp.NewCompleteActionItem(repo, writeRepo, dispatcher),
+			UpdateActionItem:   meetingapp.NewUpdateActionItem(repo, writeRepo, dispatcher),
+			ExportEmbeddings:   embeddingapp.NewExportEmbeddings(repo, noteRepo),
 		}),
 		Out: buf,
 	}

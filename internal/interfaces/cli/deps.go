@@ -6,7 +6,9 @@ import (
 	"io"
 	"net/http"
 
+	annotationapp "github.com/felixgeelhaar/granola-mcp/internal/application/annotation"
 	authapp "github.com/felixgeelhaar/granola-mcp/internal/application/auth"
+	embeddingapp "github.com/felixgeelhaar/granola-mcp/internal/application/embedding"
 	exportapp "github.com/felixgeelhaar/granola-mcp/internal/application/export"
 	meetingapp "github.com/felixgeelhaar/granola-mcp/internal/application/meeting"
 	workspaceapp "github.com/felixgeelhaar/granola-mcp/internal/application/workspace"
@@ -33,4 +35,14 @@ type Dependencies struct {
 	WebhookHandler    http.Handler
 	MCPServer         *mcpiface.Server
 	Out               io.Writer
+
+	// Write use cases (Phase 3)
+	AddNote            *annotationapp.AddNote
+	ListNotes          *annotationapp.ListNotes
+	DeleteNote         *annotationapp.DeleteNote
+	CompleteActionItem *meetingapp.CompleteActionItem
+	UpdateActionItem   *meetingapp.UpdateActionItem
+
+	// Embedding export (Phase 3)
+	ExportEmbeddings *embeddingapp.ExportEmbeddings
 }

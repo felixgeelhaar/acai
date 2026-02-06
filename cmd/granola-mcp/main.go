@@ -11,7 +11,9 @@ import (
 	"os"
 	"path/filepath"
 
+	annotationapp "github.com/felixgeelhaar/granola-mcp/internal/application/annotation"
 	authapp "github.com/felixgeelhaar/granola-mcp/internal/application/auth"
+	embeddingapp "github.com/felixgeelhaar/granola-mcp/internal/application/embedding"
 	exportapp "github.com/felixgeelhaar/granola-mcp/internal/application/export"
 	meetingapp "github.com/felixgeelhaar/granola-mcp/internal/application/meeting"
 	workspaceapp "github.com/felixgeelhaar/granola-mcp/internal/application/workspace"
@@ -19,7 +21,11 @@ import (
 	infraauth "github.com/felixgeelhaar/granola-mcp/internal/infrastructure/auth"
 	"github.com/felixgeelhaar/granola-mcp/internal/infrastructure/cache"
 	"github.com/felixgeelhaar/granola-mcp/internal/infrastructure/config"
+	"github.com/felixgeelhaar/granola-mcp/internal/infrastructure/events"
 	"github.com/felixgeelhaar/granola-mcp/internal/infrastructure/granola"
+	"github.com/felixgeelhaar/granola-mcp/internal/infrastructure/localstore"
+	"github.com/felixgeelhaar/granola-mcp/internal/infrastructure/outbox"
+	infraPolicy "github.com/felixgeelhaar/granola-mcp/internal/infrastructure/policy"
 	"github.com/felixgeelhaar/granola-mcp/internal/infrastructure/resilience"
 	"github.com/felixgeelhaar/granola-mcp/internal/interfaces/cli"
 	mcpiface "github.com/felixgeelhaar/granola-mcp/internal/interfaces/mcp"
@@ -99,6 +105,31 @@ func main() {
 	// Workspace repository
 	wsRepo := granola.NewWorkspaceRepository(granolaClient)
 
+	// Local store (SQLite for write-side: notes, action item overrides, outbox)
+	localDir := cfg.Cache.Dir // Reuse cache dir for local store
+	if err := os.MkdirAll(localDir, 0o700); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: cannot create local store dir: %v\n", err)
+	}
+	localDBPath := filepath.Join(localDir, "local.db")
+	localDB, err := sql.Open("sqlite3", localDBPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: cannot open local store: %v\n", err)
+	} else {
+		defer localDB.Close()
+		if err := localstore.InitSchema(localDB); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: cannot init local store schema: %v\n", err)
+		}
+	}
+
+	// Local store repositories
+	noteRepo := localstore.NewNoteRepository(localDB)
+	writeRepo := localstore.NewWriteRepository(localDB)
+
+	// Event infrastructure: inner dispatcher → outbox decorator
+	innerDispatcher := events.NewDispatcher(nil) // notifier wired after MCP server creation
+	outboxStore := outbox.NewSQLiteStore(localDB)
+	var dispatcher domain.EventDispatcher = outbox.NewDispatcher(innerDispatcher, outboxStore)
+
 	// --- Application Layer (Use Cases) ---
 
 	listMeetings := meetingapp.NewListMeetings(repo)
@@ -114,35 +145,67 @@ func main() {
 	listWorkspaces := workspaceapp.NewListWorkspaces(wsRepo)
 	getWorkspace := workspaceapp.NewGetWorkspace(wsRepo)
 
+	// Write use cases (Phase 3)
+	addNote := annotationapp.NewAddNote(noteRepo, repo, dispatcher)
+	listNotes := annotationapp.NewListNotes(noteRepo)
+	deleteNote := annotationapp.NewDeleteNote(noteRepo, dispatcher)
+	completeActionItem := meetingapp.NewCompleteActionItem(repo, writeRepo, dispatcher)
+	updateActionItem := meetingapp.NewUpdateActionItem(repo, writeRepo, dispatcher)
+	exportEmbeddings := embeddingapp.NewExportEmbeddings(repo, noteRepo)
+
 	// --- Interfaces Layer ---
 
 	// MCP server
 	mcpServer := mcpiface.NewServer(cfg.MCP.ServerName, version, mcpiface.ServerOptions{
-		ListMeetings:      listMeetings,
-		GetMeeting:        getMeeting,
-		GetTranscript:     getTranscript,
-		SearchTranscripts: searchTranscripts,
-		GetActionItems:    getActionItems,
-		GetMeetingStats:   getMeetingStats,
-		ListWorkspaces:    listWorkspaces,
-		GetWorkspace:      getWorkspace,
+		ListMeetings:       listMeetings,
+		GetMeeting:         getMeeting,
+		GetTranscript:      getTranscript,
+		SearchTranscripts:  searchTranscripts,
+		GetActionItems:     getActionItems,
+		GetMeetingStats:    getMeetingStats,
+		ListWorkspaces:     listWorkspaces,
+		GetWorkspace:       getWorkspace,
+		AddNote:            addNote,
+		ListNotes:          listNotes,
+		DeleteNote:         deleteNote,
+		CompleteActionItem: completeActionItem,
+		UpdateActionItem:   updateActionItem,
+		ExportEmbeddings:   exportEmbeddings,
 	})
+
+	// Policy middleware (wraps MCP server if policy file is configured)
+	if cfg.Policy.Enabled && cfg.Policy.FilePath != "" {
+		loadResult, policyErr := infraPolicy.LoadFromFile(cfg.Policy.FilePath)
+		if policyErr != nil {
+			fmt.Fprintf(os.Stderr, "Warning: cannot load policy file: %v\n", policyErr)
+		} else {
+			policyEngine := infraPolicy.NewEngine(loadResult)
+			_ = mcpiface.NewPolicyMiddleware(mcpServer, policyEngine)
+		}
+	}
 
 	// CLI dependencies
 	deps := &cli.Dependencies{
-		ListMeetings:      listMeetings,
-		GetMeeting:        getMeeting,
-		GetTranscript:     getTranscript,
-		SearchTranscripts: searchTranscripts,
-		GetActionItems:    getActionItems,
-		SyncMeetings:      syncMeetings,
-		ExportMeeting:     exportMeeting,
-		Login:             login,
-		CheckStatus:       checkStatus,
-		ListWorkspaces:    listWorkspaces,
-		GetWorkspace:      getWorkspace,
-		MCPServer:         mcpServer,
-		Out:               os.Stdout,
+		ListMeetings:       listMeetings,
+		GetMeeting:         getMeeting,
+		GetTranscript:      getTranscript,
+		SearchTranscripts:  searchTranscripts,
+		GetActionItems:     getActionItems,
+		SyncMeetings:       syncMeetings,
+		ExportMeeting:      exportMeeting,
+		Login:              login,
+		CheckStatus:        checkStatus,
+		ListWorkspaces:     listWorkspaces,
+		GetWorkspace:       getWorkspace,
+		EventDispatcher:    dispatcher,
+		MCPServer:          mcpServer,
+		AddNote:            addNote,
+		ListNotes:          listNotes,
+		DeleteNote:         deleteNote,
+		CompleteActionItem: completeActionItem,
+		UpdateActionItem:   updateActionItem,
+		ExportEmbeddings:   exportEmbeddings,
+		Out:                os.Stdout,
 	}
 
 	// Execute CLI

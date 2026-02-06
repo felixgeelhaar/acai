@@ -69,3 +69,46 @@ func (e SummaryUpdated) EventName() string     { return "summary.updated" }
 func (e SummaryUpdated) OccurredAt() time.Time { return e.occurred }
 func (e SummaryUpdated) MeetingID() MeetingID  { return e.meetingID }
 func (e SummaryUpdated) Kind() SummaryKind     { return e.kind }
+
+// ActionItemCompleted is raised when an action item is marked as done.
+type ActionItemCompleted struct {
+	meetingID    MeetingID
+	actionItemID ActionItemID
+	occurred     time.Time
+}
+
+func NewActionItemCompletedEvent(meetingID MeetingID, actionItemID ActionItemID) ActionItemCompleted {
+	return ActionItemCompleted{
+		meetingID:    meetingID,
+		actionItemID: actionItemID,
+		occurred:     time.Now().UTC(),
+	}
+}
+
+func (e ActionItemCompleted) EventName() string        { return "action_item.completed" }
+func (e ActionItemCompleted) OccurredAt() time.Time    { return e.occurred }
+func (e ActionItemCompleted) MeetingID() MeetingID     { return e.meetingID }
+func (e ActionItemCompleted) ActionItemID() ActionItemID { return e.actionItemID }
+
+// ActionItemUpdated is raised when an action item's text is modified.
+type ActionItemUpdated struct {
+	meetingID    MeetingID
+	actionItemID ActionItemID
+	newText      string
+	occurred     time.Time
+}
+
+func NewActionItemUpdatedEvent(meetingID MeetingID, actionItemID ActionItemID, newText string) ActionItemUpdated {
+	return ActionItemUpdated{
+		meetingID:    meetingID,
+		actionItemID: actionItemID,
+		newText:      newText,
+		occurred:     time.Now().UTC(),
+	}
+}
+
+func (e ActionItemUpdated) EventName() string          { return "action_item.updated" }
+func (e ActionItemUpdated) OccurredAt() time.Time      { return e.occurred }
+func (e ActionItemUpdated) MeetingID() MeetingID       { return e.meetingID }
+func (e ActionItemUpdated) ActionItemID() ActionItemID { return e.actionItemID }
+func (e ActionItemUpdated) NewText() string            { return e.newText }

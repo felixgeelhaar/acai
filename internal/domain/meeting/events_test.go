@@ -46,3 +46,40 @@ func TestSummaryUpdated_Event(t *testing.T) {
 		t.Errorf("got kind %q", event.Kind())
 	}
 }
+
+func TestActionItemCompleted_Event(t *testing.T) {
+	event := meeting.NewActionItemCompletedEvent("m-1", "ai-1")
+
+	if event.EventName() != "action_item.completed" {
+		t.Errorf("got event name %q", event.EventName())
+	}
+	if event.MeetingID() != meeting.MeetingID("m-1") {
+		t.Errorf("got meeting id %q", event.MeetingID())
+	}
+	if event.ActionItemID() != meeting.ActionItemID("ai-1") {
+		t.Errorf("got action item id %q", event.ActionItemID())
+	}
+	if event.OccurredAt().IsZero() {
+		t.Error("occurred_at should not be zero")
+	}
+}
+
+func TestActionItemUpdated_Event(t *testing.T) {
+	event := meeting.NewActionItemUpdatedEvent("m-1", "ai-1", "New text")
+
+	if event.EventName() != "action_item.updated" {
+		t.Errorf("got event name %q", event.EventName())
+	}
+	if event.MeetingID() != meeting.MeetingID("m-1") {
+		t.Errorf("got meeting id %q", event.MeetingID())
+	}
+	if event.ActionItemID() != meeting.ActionItemID("ai-1") {
+		t.Errorf("got action item id %q", event.ActionItemID())
+	}
+	if event.NewText() != "New text" {
+		t.Errorf("got new text %q", event.NewText())
+	}
+	if event.OccurredAt().IsZero() {
+		t.Error("occurred_at should not be zero")
+	}
+}

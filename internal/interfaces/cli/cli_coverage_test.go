@@ -114,6 +114,124 @@ func TestExportMeetingCmd_MarkdownFormat(t *testing.T) {
 	}
 }
 
+// --- Note command tests ---
+
+func TestNoteAddCmd(t *testing.T) {
+	deps := testDeps(t)
+	root := cli.NewRootCmd(deps)
+
+	root.SetArgs([]string{"note", "add", "m-1", "Agent observation"})
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	output := deps.Out.(*bytes.Buffer).String()
+	if !strings.Contains(output, "added to meeting") {
+		t.Errorf("expected success message, got: %q", output)
+	}
+}
+
+func TestNoteAddCmd_MissingArgs(t *testing.T) {
+	deps := testDeps(t)
+	root := cli.NewRootCmd(deps)
+
+	root.SetArgs([]string{"note", "add", "m-1"})
+	err := root.Execute()
+	if err == nil {
+		t.Error("expected error for missing text arg")
+	}
+}
+
+func TestNoteListCmd(t *testing.T) {
+	deps := testDeps(t)
+	root := cli.NewRootCmd(deps)
+
+	root.SetArgs([]string{"note", "list", "m-1"})
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	output := deps.Out.(*bytes.Buffer).String()
+	if !strings.Contains(output, "ID") || !strings.Contains(output, "AUTHOR") {
+		t.Errorf("expected table headers, got: %q", output)
+	}
+}
+
+func TestNoteListCmd_JSONFormat(t *testing.T) {
+	deps := testDeps(t)
+	root := cli.NewRootCmd(deps)
+
+	root.SetArgs([]string{"note", "list", "m-1", "--format", "json"})
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestNoteDeleteCmd_NotFound(t *testing.T) {
+	deps := testDeps(t)
+	root := cli.NewRootCmd(deps)
+
+	root.SetArgs([]string{"note", "delete", "nonexistent"})
+	err := root.Execute()
+	if err == nil {
+		t.Error("expected error for nonexistent note")
+	}
+}
+
+// --- Action command tests ---
+
+func TestActionCompleteCmd(t *testing.T) {
+	deps := testDeps(t)
+	root := cli.NewRootCmd(deps)
+
+	root.SetArgs([]string{"action", "complete", "m-1", "ai-1"})
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	output := deps.Out.(*bytes.Buffer).String()
+	if !strings.Contains(output, "completed") {
+		t.Errorf("expected completed message, got: %q", output)
+	}
+}
+
+func TestActionCompleteCmd_MissingArgs(t *testing.T) {
+	deps := testDeps(t)
+	root := cli.NewRootCmd(deps)
+
+	root.SetArgs([]string{"action", "complete", "m-1"})
+	err := root.Execute()
+	if err == nil {
+		t.Error("expected error for missing action_item_id arg")
+	}
+}
+
+func TestActionUpdateCmd(t *testing.T) {
+	deps := testDeps(t)
+	root := cli.NewRootCmd(deps)
+
+	root.SetArgs([]string{"action", "update", "m-1", "ai-1", "Updated text"})
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	output := deps.Out.(*bytes.Buffer).String()
+	if !strings.Contains(output, "updated") {
+		t.Errorf("expected updated message, got: %q", output)
+	}
+}
+
+func TestActionUpdateCmd_MissingArgs(t *testing.T) {
+	deps := testDeps(t)
+	root := cli.NewRootCmd(deps)
+
+	root.SetArgs([]string{"action", "update", "m-1", "ai-1"})
+	err := root.Execute()
+	if err == nil {
+		t.Error("expected error for missing text arg")
+	}
+}
+
 func TestAuthLoginCmd_APIToken(t *testing.T) {
 	deps := testDeps(t)
 	root := cli.NewRootCmd(deps)

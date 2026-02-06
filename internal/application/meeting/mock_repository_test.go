@@ -111,3 +111,35 @@ func (m *mockRepository) addTranscript(id domain.MeetingID, t *domain.Transcript
 func (m *mockRepository) addActionItems(id domain.MeetingID, items []*domain.ActionItem) {
 	m.actionItems[id] = items
 }
+
+// mockWriteRepository implements domain.WriteRepository for tests.
+type mockWriteRepository struct {
+	items map[domain.ActionItemID]*domain.ActionItem
+}
+
+func newMockWriteRepository() *mockWriteRepository {
+	return &mockWriteRepository{items: make(map[domain.ActionItemID]*domain.ActionItem)}
+}
+
+func (m *mockWriteRepository) SaveActionItemState(_ context.Context, item *domain.ActionItem) error {
+	m.items[item.ID()] = item
+	return nil
+}
+
+func (m *mockWriteRepository) GetLocalActionItemState(_ context.Context, id domain.ActionItemID) (*domain.ActionItem, error) {
+	item, ok := m.items[id]
+	if !ok {
+		return nil, domain.ErrMeetingNotFound
+	}
+	return item, nil
+}
+
+// mockDispatcher captures dispatched events.
+type mockDispatcher struct {
+	events []domain.DomainEvent
+}
+
+func (m *mockDispatcher) Dispatch(_ context.Context, events []domain.DomainEvent) error {
+	m.events = append(m.events, events...)
+	return nil
+}

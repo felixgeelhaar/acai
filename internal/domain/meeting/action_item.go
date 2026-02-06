@@ -59,3 +59,17 @@ func (a *ActionItem) IsCompleted() bool { return a.completed }
 func (a *ActionItem) Complete() {
 	a.completed = true
 }
+
+// Uncomplete marks the action item as not done.
+func (a *ActionItem) Uncomplete() {
+	a.completed = false
+}
+
+// UpdateText changes the action item text. Returns error if text is empty.
+func (a *ActionItem) UpdateText(text string) error {
+	if text == "" {
+		return ErrInvalidActionItemText
+	}
+	a.text = text
+	return nil
+}
