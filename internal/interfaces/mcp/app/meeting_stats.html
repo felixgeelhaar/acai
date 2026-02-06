@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meeting Statistics Dashboard</title>
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<script src="https://unpkg.com/d3@7/dist/d3.min.js"></script>
+<style>
+:root {
+  --bg-primary: #1a1b26;
+  --bg-secondary: #24283b;
+  --bg-card: #292e42;
+  --text-primary: #c0caf5;
+  --text-secondary: #a9b1d6;
+  --text-muted: #565f89;
+  --accent: #7aa2f7;
+  --accent-secondary: #bb9af7;
+  --green: #9ece6a;
+  --orange: #e0af68;
+  --red: #f7768e;
+  --border: #3b4261;
+  --chart-1: #7aa2f7;
+  --chart-2: #bb9af7;
+  --chart-3: #9ece6a;
+  --chart-4: #e0af68;
+  --chart-5: #f7768e;
+  --chart-6: #7dcfff;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.dashboard {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.header h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.header .subtitle {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+}
+
+.stat-card .value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.stat-card .label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 4px;
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .charts-grid { grid-template-columns: 1fr; }
+  .dashboard { padding: 12px; }
+}
+
+.chart-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.chart-card h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.chart-card svg {
+  width: 100%;
+  overflow: visible;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  color: var(--text-muted);
+  font-size: 1rem;
+}
+
+.loading .spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-right: 12px;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.tooltip {
+  position: absolute;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  color: var(--text-primary);
+  pointer-events: none;
+  z-index: 10;
+  white-space: nowrap;
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div v-if="!data" class="loading">
+    <div class="spinner"></div>
+    <span>Waiting for meeting data...</span>
+  </div>
+  <div v-else class="dashboard">
+    <div class="header">
+      <h1>Meeting Statistics</h1>
+      <div class="subtitle">
+        {{ data.date_range.earliest }} to {{ data.date_range.latest }}
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="value">{{ data.total_meetings }}</div>
+        <div class="label">Total Meetings</div>
+      </div>
+      <div class="stat-card">
+        <div class="value">{{ data.action_items.total }}</div>
+        <div class="label">Action Items</div>
+      </div>
+      <div class="stat-card">
+        <div class="value" :style="{ color: completionColor }">
+          {{ (data.action_items.completion_rate * 100).toFixed(0) }}%
+        </div>
+        <div class="label">Completion Rate</div>
+      </div>
+      <div class="stat-card">
+        <div class="value">{{ (data.summary_coverage.coverage_rate * 100).toFixed(0) }}%</div>
+        <div class="label">Summary Coverage</div>
+      </div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h3>Meeting Frequency</h3>
+        <div ref="frequencyChart"></div>
+      </div>
+      <div class="chart-card">
+        <h3>Platform Distribution</h3>
+        <div ref="platformChart"></div>
+      </div>
+      <div class="chart-card">
+        <h3>Top Participants</h3>
+        <div ref="participantsChart"></div>
+      </div>
+      <div class="chart-card">
+        <h3>Action Item Completion</h3>
+        <div ref="actionChart"></div>
+      </div>
+      <div class="chart-card" style="grid-column: span 2;">
+        <h3>Day / Hour Heatmap</h3>
+        <div ref="heatmapChart"></div>
+      </div>
+      <div class="chart-card" v-if="data.speaker_talk_time && data.speaker_talk_time.length > 0">
+        <h3>Speaker Talk Time</h3>
+        <div ref="speakerChart"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const { createApp, ref, computed, watch, onMounted, nextTick } = Vue;
+
+createApp({
+  setup() {
+    const data = ref(null);
+    const frequencyChart = ref(null);
+    const platformChart = ref(null);
+    const participantsChart = ref(null);
+    const actionChart = ref(null);
+    const heatmapChart = ref(null);
+    const speakerChart = ref(null);
+
+    const completionColor = computed(() => {
+      if (!data.value) return '#7aa2f7';
+      const rate = data.value.action_items.completion_rate;
+      if (rate >= 0.75) return '#9ece6a';
+      if (rate >= 0.5) return '#e0af68';
+      return '#f7768e';
+    });
+
+    const colors = ['#7aa2f7', '#bb9af7', '#9ece6a', '#e0af68', '#f7768e', '#7dcfff'];
+
+    function renderFrequency(container, entries) {
+      if (!entries || entries.length === 0) return;
+      const el = container;
+      const width = el.clientWidth || 500;
+      const height = 200;
+      const margin = { top: 10, right: 10, bottom: 30, left: 40 };
+      const w = width - margin.left - margin.right;
+      const h = height - margin.top - margin.bottom;
+
+      const svg = d3.select(el).append('svg').attr('viewBox', `0 0 ${width} ${height}`);
+      const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+      const parseDate = d3.timeParse('%Y-%m-%d');
+      const pts = entries.map(d => ({ date: parseDate(d.date), count: d.count })).sort((a, b) => a.date - b.date);
+
+      const x = d3.scaleTime().domain(d3.extent(pts, d => d.date)).range([0, w]);
+      const y = d3.scaleLinear().domain([0, d3.max(pts, d => d.count)]).nice().range([h, 0]);
+
+      g.append('g').attr('transform', `translate(0,${h})`).call(d3.axisBottom(x).ticks(5).tickFormat(d3.timeFormat('%b %d')))
+        .selectAll('text').style('fill', '#565f89').style('font-size', '10px');
+      g.append('g').call(d3.axisLeft(y).ticks(4)).selectAll('text').style('fill', '#565f89').style('font-size', '10px');
+      g.selectAll('.domain, .tick line').style('stroke', '#3b4261');
+
+      const area = d3.area().x(d => x(d.date)).y0(h).y1(d => y(d.count)).curve(d3.curveMonotoneX);
+      const line = d3.line().x(d => x(d.date)).y(d => y(d.count)).curve(d3.curveMonotoneX);
+
+      g.append('path').datum(pts).attr('d', area).attr('fill', '#7aa2f7').attr('fill-opacity', 0.15);
+      g.append('path').datum(pts).attr('d', line).attr('fill', 'none').attr('stroke', '#7aa2f7').attr('stroke-width', 2);
+      g.selectAll('circle').data(pts).join('circle').attr('cx', d => x(d.date)).attr('cy', d => y(d.count)).attr('r', 3).attr('fill', '#7aa2f7');
+    }
+
+    function renderPlatform(container, entries) {
+      if (!entries || entries.length === 0) return;
+      const el = container;
+      const size = Math.min(el.clientWidth || 300, 250);
+      const radius = size / 2 - 20;
+
+      const svg = d3.select(el).append('svg').attr('viewBox', `0 0 ${size} ${size}`);
+      const g = svg.append('g').attr('transform', `translate(${size / 2},${size / 2})`);
+
+      const pie = d3.pie().value(d => d.count).sort(null);
+      const arc = d3.arc().innerRadius(radius * 0.5).outerRadius(radius);
+      const color = d3.scaleOrdinal().domain(entries.map(d => d.source)).range(colors);
+
+      g.selectAll('path').data(pie(entries)).join('path')
+        .attr('d', arc).attr('fill', d => color(d.data.source)).attr('stroke', '#292e42').attr('stroke-width', 2);
+
+      g.selectAll('text').data(pie(entries)).join('text')
+        .attr('transform', d => `translate(${arc.centroid(d)})`)
+        .attr('text-anchor', 'middle').attr('fill', '#c0caf5').style('font-size', '11px')
+        .text(d => d.data.source);
+    }
+
+    function renderParticipants(container, entries) {
+      if (!entries || entries.length === 0) return;
+      const el = container;
+      const top = entries.slice(0, 10);
+      const width = el.clientWidth || 500;
+      const barHeight = 22;
+      const height = top.length * barHeight + 20;
+      const margin = { top: 5, right: 40, bottom: 5, left: 100 };
+      const w = width - margin.left - margin.right;
+
+      const svg = d3.select(el).append('svg').attr('viewBox', `0 0 ${width} ${height}`);
+      const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+      const x = d3.scaleLinear().domain([0, d3.max(top, d => d.meeting_count)]).range([0, w]);
+      const y = d3.scaleBand().domain(top.map(d => d.name)).range([0, height - margin.top - margin.bottom]).padding(0.3);
+
+      g.selectAll('rect').data(top).join('rect')
+        .attr('x', 0).attr('y', d => y(d.name)).attr('width', d => x(d.meeting_count))
+        .attr('height', y.bandwidth()).attr('fill', '#7aa2f7').attr('rx', 3);
+
+      g.selectAll('.label').data(top).join('text').attr('class', 'label')
+        .attr('x', -5).attr('y', d => y(d.name) + y.bandwidth() / 2)
+        .attr('dy', '0.35em').attr('text-anchor', 'end').attr('fill', '#a9b1d6')
+        .style('font-size', '11px').text(d => d.name);
+
+      g.selectAll('.count').data(top).join('text').attr('class', 'count')
+        .attr('x', d => x(d.meeting_count) + 5).attr('y', d => y(d.name) + y.bandwidth() / 2)
+        .attr('dy', '0.35em').attr('fill', '#565f89').style('font-size', '10px')
+        .text(d => d.meeting_count);
+    }
+
+    function renderActionGauge(container, stats) {
+      const el = container;
+      const size = Math.min(el.clientWidth || 250, 220);
+      const svg = d3.select(el).append('svg').attr('viewBox', `0 0 ${size} ${size * 0.65}`);
+      const g = svg.append('g').attr('transform', `translate(${size / 2},${size * 0.55})`);
+
+      const radius = size / 2 - 20;
+      const arcGen = d3.arc().innerRadius(radius * 0.65).outerRadius(radius).startAngle(-Math.PI / 2);
+
+      g.append('path').attr('d', arcGen({ endAngle: Math.PI / 2 })).attr('fill', '#3b4261');
+
+      const rate = stats.completion_rate || 0;
+      const endAngle = -Math.PI / 2 + Math.PI * rate;
+      const gaugeColor = rate >= 0.75 ? '#9ece6a' : rate >= 0.5 ? '#e0af68' : '#f7768e';
+
+      g.append('path').attr('d', arcGen({ endAngle })).attr('fill', gaugeColor);
+
+      g.append('text').attr('y', -10).attr('text-anchor', 'middle').attr('fill', '#c0caf5')
+        .style('font-size', '1.5rem').style('font-weight', '700').text(`${(rate * 100).toFixed(0)}%`);
+
+      g.append('text').attr('y', 10).attr('text-anchor', 'middle').attr('fill', '#565f89')
+        .style('font-size', '0.7rem').text(`${stats.completed} / ${stats.total}`);
+    }
+
+    function renderHeatmap(container, entries) {
+      const el = container;
+      const width = el.clientWidth || 700;
+      const cellSize = Math.min((width - 60) / 24, 28);
+      const height = 7 * cellSize + 40;
+      const margin = { top: 20, left: 40 };
+
+      const svg = d3.select(el).append('svg').attr('viewBox', `0 0 ${width} ${height}`);
+      const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const maxCount = d3.max(entries, d => d.count) || 1;
+      const color = d3.scaleSequential(d3.interpolateViridis).domain([0, maxCount]);
+
+      const lookup = new Map();
+      entries.forEach(d => lookup.set(`${d.day}-${d.hour}`, d.count));
+
+      for (let day = 0; day < 7; day++) {
+        for (let hour = 0; hour < 24; hour++) {
+          const count = lookup.get(`${day}-${hour}`) || 0;
+          g.append('rect')
+            .attr('x', hour * cellSize).attr('y', day * cellSize)
+            .attr('width', cellSize - 2).attr('height', cellSize - 2)
+            .attr('rx', 3).attr('fill', count > 0 ? color(count) : '#1a1b26')
+            .attr('stroke', '#3b4261').attr('stroke-width', 0.5);
+        }
+      }
+
+      g.selectAll('.day-label').data(days).join('text').attr('class', 'day-label')
+        .attr('x', -5).attr('y', (d, i) => i * cellSize + cellSize / 2)
+        .attr('dy', '0.35em').attr('text-anchor', 'end').attr('fill', '#565f89')
+        .style('font-size', '10px').text(d => d);
+
+      [0, 6, 12, 18, 23].forEach(h => {
+        g.append('text').attr('x', h * cellSize + cellSize / 2).attr('y', -5)
+          .attr('text-anchor', 'middle').attr('fill', '#565f89')
+          .style('font-size', '10px').text(`${h}:00`);
+      });
+    }
+
+    function renderSpeaker(container, entries) {
+      if (!entries || entries.length === 0) return;
+      const el = container;
+      const top = entries.slice(0, 10);
+      const width = el.clientWidth || 500;
+      const barHeight = 22;
+      const height = top.length * barHeight + 20;
+      const margin = { top: 5, right: 60, bottom: 5, left: 100 };
+      const w = width - margin.left - margin.right;
+
+      const svg = d3.select(el).append('svg').attr('viewBox', `0 0 ${width} ${height}`);
+      const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+      const x = d3.scaleLinear().domain([0, d3.max(top, d => d.word_count)]).range([0, w]);
+      const y = d3.scaleBand().domain(top.map(d => d.speaker)).range([0, height - margin.top - margin.bottom]).padding(0.3);
+
+      g.selectAll('rect').data(top).join('rect')
+        .attr('x', 0).attr('y', d => y(d.speaker)).attr('width', d => x(d.word_count))
+        .attr('height', y.bandwidth()).attr('fill', '#bb9af7').attr('rx', 3);
+
+      g.selectAll('.label').data(top).join('text').attr('class', 'label')
+        .attr('x', -5).attr('y', d => y(d.speaker) + y.bandwidth() / 2)
+        .attr('dy', '0.35em').attr('text-anchor', 'end').attr('fill', '#a9b1d6')
+        .style('font-size', '11px').text(d => d.speaker);
+
+      g.selectAll('.count').data(top).join('text').attr('class', 'count')
+        .attr('x', d => x(d.word_count) + 5).attr('y', d => y(d.speaker) + y.bandwidth() / 2)
+        .attr('dy', '0.35em').attr('fill', '#565f89').style('font-size', '10px')
+        .text(d => `${d.word_count} words`);
+    }
+
+    function renderAll() {
+      if (!data.value) return;
+      nextTick(() => {
+        if (frequencyChart.value) renderFrequency(frequencyChart.value, data.value.meeting_frequency);
+        if (platformChart.value) renderPlatform(platformChart.value, data.value.platform_distribution);
+        if (participantsChart.value) renderParticipants(participantsChart.value, data.value.top_participants);
+        if (actionChart.value) renderActionGauge(actionChart.value, data.value.action_items);
+        if (heatmapChart.value) renderHeatmap(heatmapChart.value, data.value.day_of_week_heatmap);
+        if (speakerChart.value) renderSpeaker(speakerChart.value, data.value.speaker_talk_time);
+      });
+    }
+
+    watch(data, renderAll);
+
+    onMounted(() => {
+      window.addEventListener('message', (event) => {
+        if (event.data && event.data.type === 'mcp-tool-result') {
+          data.value = event.data.result;
+        }
+      });
+      window.parent.postMessage({ type: 'mcp-app-ready' }, '*');
+    });
+
+    return {
+      data,
+      frequencyChart,
+      platformChart,
+      participantsChart,
+      actionChart,
+      heatmapChart,
+      speakerChart,
+      completionColor,
+    };
+  }
+}).mount('#app');
+</script>
+</body>
+</html>

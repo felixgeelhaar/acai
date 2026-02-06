@@ -1,0 +1,26 @@
+version: 1
+language: go
+policy:
+  default:
+    min: 80
+  domains:
+    - name: cmd
+      match:
+        - ./cmd/...
+      min: 0
+    - name: application
+      match:
+        - ./internal/application/...
+      min: null
+    - name: domain
+      match:
+        - ./internal/domain/...
+      min: null
+    - name: infrastructure
+      match:
+        - ./internal/infrastructure/...
+      min: null
+    - name: interfaces
+      match:
+        - ./internal/interfaces/...
+      min: null
