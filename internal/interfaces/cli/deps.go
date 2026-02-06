@@ -4,10 +4,13 @@ package cli
 
 import (
 	"io"
+	"net/http"
 
-	meetingapp "github.com/felixgeelhaar/granola-mcp/internal/application/meeting"
 	authapp "github.com/felixgeelhaar/granola-mcp/internal/application/auth"
 	exportapp "github.com/felixgeelhaar/granola-mcp/internal/application/export"
+	meetingapp "github.com/felixgeelhaar/granola-mcp/internal/application/meeting"
+	workspaceapp "github.com/felixgeelhaar/granola-mcp/internal/application/workspace"
+	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
 	mcpiface "github.com/felixgeelhaar/granola-mcp/internal/interfaces/mcp"
 )
 
@@ -24,6 +27,10 @@ type Dependencies struct {
 	ExportMeeting     *exportapp.ExportMeeting
 	Login             *authapp.Login
 	CheckStatus       *authapp.CheckStatus
+	ListWorkspaces    *workspaceapp.ListWorkspaces
+	GetWorkspace      *workspaceapp.GetWorkspace
+	EventDispatcher   domain.EventDispatcher
+	WebhookHandler    http.Handler
 	MCPServer         *mcpiface.Server
 	Out               io.Writer
 }

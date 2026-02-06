@@ -8,10 +8,12 @@ import (
 	"time"
 
 	authapp "github.com/felixgeelhaar/granola-mcp/internal/application/auth"
-	meetingapp "github.com/felixgeelhaar/granola-mcp/internal/application/meeting"
 	exportapp "github.com/felixgeelhaar/granola-mcp/internal/application/export"
+	meetingapp "github.com/felixgeelhaar/granola-mcp/internal/application/meeting"
+	workspaceapp "github.com/felixgeelhaar/granola-mcp/internal/application/workspace"
 	domainauth "github.com/felixgeelhaar/granola-mcp/internal/domain/auth"
 	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
+	"github.com/felixgeelhaar/granola-mcp/internal/domain/workspace"
 	"github.com/felixgeelhaar/granola-mcp/internal/interfaces/cli"
 	mcpiface "github.com/felixgeelhaar/granola-mcp/internal/interfaces/mcp"
 )
@@ -20,7 +22,7 @@ func TestRootCmd_HasExpectedSubcommands(t *testing.T) {
 	deps := testDeps(t)
 	root := cli.NewRootCmd(deps)
 
-	expected := []string{"auth", "sync", "list", "export", "serve", "version"}
+	expected := []string{"auth", "sync", "list", "export", "serve", "workspace", "version"}
 	for _, name := range expected {
 		found := false
 		for _, cmd := range root.Commands() {
@@ -118,6 +120,45 @@ func TestExportMeetingCmd_MissingArg(t *testing.T) {
 	}
 }
 
+func TestWorkspaceListCmd(t *testing.T) {
+	deps := testDeps(t)
+	root := cli.NewRootCmd(deps)
+
+	root.SetArgs([]string{"workspace", "list"})
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	output := deps.Out.(*bytes.Buffer).String()
+	if !strings.Contains(output, "No workspaces found") {
+		t.Errorf("expected empty workspace message, got: %q", output)
+	}
+}
+
+func TestWorkspaceListCmd_WithWorkspaces(t *testing.T) {
+	deps := testDeps(t)
+
+	// Replace workspace repo with one that returns data
+	ws1, _ := workspace.New("ws-1", "Engineering", "engineering")
+	ws2, _ := workspace.New("ws-2", "Design", "design")
+	wsRepo := &mockWorkspaceRepo{workspaces: []*workspace.Workspace{ws1, ws2}}
+	deps.ListWorkspaces = workspaceapp.NewListWorkspaces(wsRepo)
+
+	root := cli.NewRootCmd(deps)
+	root.SetArgs([]string{"workspace", "list"})
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	output := deps.Out.(*bytes.Buffer).String()
+	if !strings.Contains(output, "Engineering") {
+		t.Errorf("expected workspace name, got: %q", output)
+	}
+	if !strings.Contains(output, "design") {
+		t.Errorf("expected workspace slug, got: %q", output)
+	}
+}
+
 // --- Test Helpers ---
 
 type mockAuthService struct{}
@@ -154,10 +195,28 @@ func (m *mockMeetingRepo) Sync(_ context.Context, _ *time.Time) ([]domain.Domain
 	return []domain.DomainEvent{}, nil
 }
 
+type mockWorkspaceRepo struct {
+	workspaces []*workspace.Workspace
+}
+
+func (m *mockWorkspaceRepo) List(_ context.Context) ([]*workspace.Workspace, error) {
+	return m.workspaces, nil
+}
+
+func (m *mockWorkspaceRepo) FindByID(_ context.Context, id workspace.WorkspaceID) (*workspace.Workspace, error) {
+	for _, ws := range m.workspaces {
+		if ws.ID() == id {
+			return ws, nil
+		}
+	}
+	return nil, workspace.ErrWorkspaceNotFound
+}
+
 func testDeps(t *testing.T) *cli.Dependencies {
 	t.Helper()
 	repo := &mockMeetingRepo{}
 	authSvc := &mockAuthService{}
+	wsRepo := &mockWorkspaceRepo{}
 	buf := new(bytes.Buffer)
 
 	return &cli.Dependencies{
@@ -170,15 +229,18 @@ func testDeps(t *testing.T) *cli.Dependencies {
 		ExportMeeting:     exportapp.NewExportMeeting(repo),
 		Login:             authapp.NewLogin(authSvc),
 		CheckStatus:       authapp.NewCheckStatus(authSvc),
-		MCPServer: mcpiface.NewServer(
-			"granola-mcp", "test",
-			meetingapp.NewListMeetings(repo),
-			meetingapp.NewGetMeeting(repo),
-			meetingapp.NewGetTranscript(repo),
-			meetingapp.NewSearchTranscripts(repo),
-			meetingapp.NewGetActionItems(repo),
-			meetingapp.NewGetMeetingStats(repo),
-		),
+		ListWorkspaces:    workspaceapp.NewListWorkspaces(wsRepo),
+		GetWorkspace:      workspaceapp.NewGetWorkspace(wsRepo),
+		MCPServer: mcpiface.NewServer("granola-mcp", "test", mcpiface.ServerOptions{
+			ListMeetings:      meetingapp.NewListMeetings(repo),
+			GetMeeting:        meetingapp.NewGetMeeting(repo),
+			GetTranscript:     meetingapp.NewGetTranscript(repo),
+			SearchTranscripts: meetingapp.NewSearchTranscripts(repo),
+			GetActionItems:    meetingapp.NewGetActionItems(repo),
+			GetMeetingStats:   meetingapp.NewGetMeetingStats(repo),
+			ListWorkspaces:    workspaceapp.NewListWorkspaces(wsRepo),
+			GetWorkspace:      workspaceapp.NewGetWorkspace(wsRepo),
+		}),
 		Out: buf,
 	}
 }

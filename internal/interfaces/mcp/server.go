@@ -7,13 +7,28 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"time"
 
 	mcpfw "github.com/felixgeelhaar/mcp-go"
 
 	meetingapp "github.com/felixgeelhaar/granola-mcp/internal/application/meeting"
+	workspaceapp "github.com/felixgeelhaar/granola-mcp/internal/application/workspace"
 	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
+	"github.com/felixgeelhaar/granola-mcp/internal/domain/workspace"
 )
+
+// ServerOptions groups all use cases passed to NewServer.
+type ServerOptions struct {
+	ListMeetings      *meetingapp.ListMeetings
+	GetMeeting        *meetingapp.GetMeeting
+	GetTranscript     *meetingapp.GetTranscript
+	SearchTranscripts *meetingapp.SearchTranscripts
+	GetActionItems    *meetingapp.GetActionItems
+	GetMeetingStats   *meetingapp.GetMeetingStats
+	ListWorkspaces    *workspaceapp.ListWorkspaces
+	GetWorkspace      *workspaceapp.GetWorkspace
+}
 
 // Server wraps the mcp-go server and exposes Granola meeting data
 // as MCP tools and resources.
@@ -26,30 +41,26 @@ type Server struct {
 	searchTranscripts *meetingapp.SearchTranscripts
 	getActionItems    *meetingapp.GetActionItems
 	getMeetingStats   *meetingapp.GetMeetingStats
+	listWorkspaces    *workspaceapp.ListWorkspaces
+	getWorkspace      *workspaceapp.GetWorkspace
 
 	name    string
 	version string
 }
 
 // NewServer creates a new MCP server wired to application use cases.
-func NewServer(
-	name, version string,
-	listMeetings *meetingapp.ListMeetings,
-	getMeeting *meetingapp.GetMeeting,
-	getTranscript *meetingapp.GetTranscript,
-	searchTranscripts *meetingapp.SearchTranscripts,
-	getActionItems *meetingapp.GetActionItems,
-	getMeetingStats *meetingapp.GetMeetingStats,
-) *Server {
+func NewServer(name, version string, opts ServerOptions) *Server {
 	s := &Server{
 		name:              name,
 		version:           version,
-		listMeetings:      listMeetings,
-		getMeeting:        getMeeting,
-		getTranscript:     getTranscript,
-		searchTranscripts: searchTranscripts,
-		getActionItems:    getActionItems,
-		getMeetingStats:   getMeetingStats,
+		listMeetings:      opts.ListMeetings,
+		getMeeting:        opts.GetMeeting,
+		getTranscript:     opts.GetTranscript,
+		searchTranscripts: opts.SearchTranscripts,
+		getActionItems:    opts.GetActionItems,
+		getMeetingStats:   opts.GetMeetingStats,
+		listWorkspaces:    opts.ListWorkspaces,
+		getWorkspace:      opts.GetWorkspace,
 	}
 
 	srv := mcpfw.NewServer(mcpfw.ServerInfo{
@@ -73,6 +84,45 @@ func (s *Server) Inner() *mcpfw.Server { return s.inner }
 // ServeStdio starts the MCP server on stdio transport.
 func (s *Server) ServeStdio(ctx context.Context) error {
 	return mcpfw.ServeStdio(ctx, s.inner)
+}
+
+// ServeHTTP starts the MCP server on HTTP+SSE transport.
+// extraRoutes allows mounting additional HTTP handlers (e.g., webhook, health).
+func (s *Server) ServeHTTP(ctx context.Context, addr string, extraRoutes func(mux *http.ServeMux)) error {
+	mux := http.NewServeMux()
+
+	// Health check endpoint
+	mux.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, `{"status":"ok","server":"%s","version":"%s"}`, s.name, s.version)
+	})
+
+	if extraRoutes != nil {
+		extraRoutes(mux)
+	}
+
+	srv := &http.Server{
+		Addr:    addr,
+		Handler: mux,
+	}
+
+	errCh := make(chan error, 1)
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			errCh <- err
+		}
+		close(errCh)
+	}()
+
+	select {
+	case <-ctx.Done():
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		return srv.Shutdown(shutdownCtx)
+	case err := <-errCh:
+		return err
+	}
 }
 
 // --- Tool registration ---
@@ -102,6 +152,12 @@ func (s *Server) registerTools(srv *mcpfw.Server) {
 		Description("Get aggregated meeting statistics with visual dashboard").
 		UIResource("ui://meeting-stats").
 		Handler(s.HandleMeetingStats)
+
+	if s.listWorkspaces != nil {
+		srv.Tool("list_workspaces").
+			Description("List all Granola workspaces").
+			Handler(s.HandleListWorkspaces)
+	}
 }
 
 // --- Resource registration ---
@@ -160,6 +216,29 @@ func (s *Server) registerResources(srv *mcpfw.Server) {
 				Text:     string(data),
 			}, nil
 		})
+
+	if s.getWorkspace != nil {
+		srv.Resource("workspace://{id}").
+			Name("Workspace").
+			Description("A Granola workspace with name and slug").
+			MimeType("application/json").
+			Handler(func(ctx context.Context, uri string, params map[string]string) (*mcpfw.ResourceContent, error) {
+				id := params["id"]
+				out, err := s.getWorkspace.Execute(ctx, workspaceapp.GetWorkspaceInput{
+					ID: workspace.WorkspaceID(id),
+				})
+				if err != nil {
+					return nil, err
+				}
+				result := toWorkspaceResult(out.Workspace)
+				data, _ := json.Marshal(result)
+				return &mcpfw.ResourceContent{
+					URI:      uri,
+					MimeType: "application/json",
+					Text:     string(data),
+				}, nil
+			})
+	}
 }
 
 // --- Tool Input Types ---
@@ -196,6 +275,9 @@ type GetActionItemsToolInput struct {
 type MeetingStatsToolInput struct {
 	Since *string `json:"since,omitempty"`
 	Until *string `json:"until,omitempty"`
+}
+
+type ListWorkspacesToolInput struct {
 }
 
 // --- Tool Output Types ---
@@ -256,6 +338,12 @@ type MeetingStatsResult struct {
 	DayOfWeekHeatmap     []meetingapp.HeatmapEntry           `json:"day_of_week_heatmap"`
 	SpeakerTalkTime      []meetingapp.SpeakerEntry           `json:"speaker_talk_time"`
 	SummaryCoverage      meetingapp.SummaryCoverageStats     `json:"summary_coverage"`
+}
+
+type WorkspaceResult struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	Slug string `json:"slug"`
 }
 
 // --- Tool Handlers ---
@@ -405,6 +493,19 @@ func (s *Server) HandleMeetingStats(ctx context.Context, input MeetingStatsToolI
 	}, nil
 }
 
+func (s *Server) HandleListWorkspaces(ctx context.Context, _ ListWorkspacesToolInput) ([]WorkspaceResult, error) {
+	out, err := s.listWorkspaces.Execute(ctx, workspaceapp.ListWorkspacesInput{})
+	if err != nil {
+		return nil, err
+	}
+
+	results := make([]WorkspaceResult, len(out.Workspaces))
+	for i, ws := range out.Workspaces {
+		results[i] = toWorkspaceResult(ws)
+	}
+	return results, nil
+}
+
 // --- Result to JSON helper ---
 
 func (s *Server) HandleToolJSON(ctx context.Context, tool string, rawInput json.RawMessage) (json.RawMessage, error) {
@@ -470,6 +571,17 @@ func (s *Server) HandleToolJSON(ctx context.Context, tool string, rawInput json.
 			return nil, fmt.Errorf("invalid input: %w", err)
 		}
 		result, err := s.HandleMeetingStats(ctx, input)
+		if err != nil {
+			return nil, err
+		}
+		return json.Marshal(result)
+
+	case "list_workspaces":
+		var input ListWorkspacesToolInput
+		if err := json.Unmarshal(rawInput, &input); err != nil {
+			return nil, fmt.Errorf("invalid input: %w", err)
+		}
+		result, err := s.HandleListWorkspaces(ctx, input)
 		if err != nil {
 			return nil, err
 		}
@@ -549,4 +661,12 @@ func toActionItemResult(item *domain.ActionItem) ActionItemResult {
 		r.DueDate = &s
 	}
 	return r
+}
+
+func toWorkspaceResult(ws *workspace.Workspace) WorkspaceResult {
+	return WorkspaceResult{
+		ID:   string(ws.ID()),
+		Name: ws.Name(),
+		Slug: ws.Slug(),
+	}
 }

@@ -33,6 +33,12 @@ func newSyncCmd(deps *Dependencies) *cobra.Command {
 				return fmt.Errorf("sync failed: %w", err)
 			}
 
+			if deps.EventDispatcher != nil && len(out.Events) > 0 {
+				if dispErr := deps.EventDispatcher.Dispatch(cmd.Context(), out.Events); dispErr != nil {
+					fmt.Fprintf(deps.Out, "Warning: event dispatch failed: %v\n", dispErr)
+				}
+			}
+
 			fmt.Fprintf(deps.Out, "Synced %d meeting event(s)\n", len(out.Events))
 			return nil
 		},

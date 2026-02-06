@@ -7,7 +7,9 @@ import (
 	"time"
 
 	meetingapp "github.com/felixgeelhaar/granola-mcp/internal/application/meeting"
+	workspaceapp "github.com/felixgeelhaar/granola-mcp/internal/application/workspace"
 	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
+	"github.com/felixgeelhaar/granola-mcp/internal/domain/workspace"
 	mcpiface "github.com/felixgeelhaar/granola-mcp/internal/interfaces/mcp"
 )
 
@@ -274,14 +276,46 @@ func mustMeeting(t *testing.T, id domain.MeetingID, title string) *domain.Meetin
 	return m
 }
 
+type mockWorkspaceRepo struct {
+	workspaces []*workspace.Workspace
+}
+
+func (m *mockWorkspaceRepo) List(_ context.Context) ([]*workspace.Workspace, error) {
+	return m.workspaces, nil
+}
+
+func (m *mockWorkspaceRepo) FindByID(_ context.Context, id workspace.WorkspaceID) (*workspace.Workspace, error) {
+	for _, ws := range m.workspaces {
+		if ws.ID() == id {
+			return ws, nil
+		}
+	}
+	return nil, workspace.ErrWorkspaceNotFound
+}
+
 func newTestServer(repo *mockRepo) *mcpiface.Server {
-	return mcpiface.NewServer(
-		"granola-mcp", "test",
-		meetingapp.NewListMeetings(repo),
-		meetingapp.NewGetMeeting(repo),
-		meetingapp.NewGetTranscript(repo),
-		meetingapp.NewSearchTranscripts(repo),
-		meetingapp.NewGetActionItems(repo),
-		meetingapp.NewGetMeetingStats(repo),
-	)
+	wsRepo := &mockWorkspaceRepo{}
+	return mcpiface.NewServer("granola-mcp", "test", mcpiface.ServerOptions{
+		ListMeetings:      meetingapp.NewListMeetings(repo),
+		GetMeeting:        meetingapp.NewGetMeeting(repo),
+		GetTranscript:     meetingapp.NewGetTranscript(repo),
+		SearchTranscripts: meetingapp.NewSearchTranscripts(repo),
+		GetActionItems:    meetingapp.NewGetActionItems(repo),
+		GetMeetingStats:   meetingapp.NewGetMeetingStats(repo),
+		ListWorkspaces:    workspaceapp.NewListWorkspaces(wsRepo),
+		GetWorkspace:      workspaceapp.NewGetWorkspace(wsRepo),
+	})
+}
+
+func newTestServerWithWorkspaces(repo *mockRepo, wsRepo *mockWorkspaceRepo) *mcpiface.Server {
+	return mcpiface.NewServer("granola-mcp", "test", mcpiface.ServerOptions{
+		ListMeetings:      meetingapp.NewListMeetings(repo),
+		GetMeeting:        meetingapp.NewGetMeeting(repo),
+		GetTranscript:     meetingapp.NewGetTranscript(repo),
+		SearchTranscripts: meetingapp.NewSearchTranscripts(repo),
+		GetActionItems:    meetingapp.NewGetActionItems(repo),
+		GetMeetingStats:   meetingapp.NewGetMeetingStats(repo),
+		ListWorkspaces:    workspaceapp.NewListWorkspaces(wsRepo),
+		GetWorkspace:      workspaceapp.NewGetWorkspace(wsRepo),
+	})
 }

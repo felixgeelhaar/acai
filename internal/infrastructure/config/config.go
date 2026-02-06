@@ -17,6 +17,11 @@ type Config struct {
 	Privacy    PrivacyConfig
 	Sync       SyncConfig
 	Logging    LoggingConfig
+	Webhook    WebhookConfig
+}
+
+type WebhookConfig struct {
+	Secret string
 }
 
 type GranolaConfig struct {
@@ -107,6 +112,9 @@ func Load() *Config {
 	}
 	if v := os.Getenv("GRANOLA_MCP_LOGGING_FORMAT"); v != "" {
 		cfg.Logging.Format = v
+	}
+	if v := os.Getenv("GRANOLA_MCP_WEBHOOK_SECRET"); v != "" {
+		cfg.Webhook.Secret = v
 	}
 
 	return cfg

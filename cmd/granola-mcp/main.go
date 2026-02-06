@@ -1,0 +1,153 @@
+// Package main is the composition root for granola-mcp.
+// All dependencies are wired here — no service locator, no global state.
+// This is the only place that knows about all layers simultaneously.
+package main
+
+import (
+	"context"
+	"database/sql"
+	"fmt"
+	"net/http"
+	"os"
+	"path/filepath"
+
+	authapp "github.com/felixgeelhaar/granola-mcp/internal/application/auth"
+	exportapp "github.com/felixgeelhaar/granola-mcp/internal/application/export"
+	meetingapp "github.com/felixgeelhaar/granola-mcp/internal/application/meeting"
+	workspaceapp "github.com/felixgeelhaar/granola-mcp/internal/application/workspace"
+	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
+	infraauth "github.com/felixgeelhaar/granola-mcp/internal/infrastructure/auth"
+	"github.com/felixgeelhaar/granola-mcp/internal/infrastructure/cache"
+	"github.com/felixgeelhaar/granola-mcp/internal/infrastructure/config"
+	"github.com/felixgeelhaar/granola-mcp/internal/infrastructure/granola"
+	"github.com/felixgeelhaar/granola-mcp/internal/infrastructure/resilience"
+	"github.com/felixgeelhaar/granola-mcp/internal/interfaces/cli"
+	mcpiface "github.com/felixgeelhaar/granola-mcp/internal/interfaces/mcp"
+	_ "github.com/mattn/go-sqlite3"
+)
+
+var (
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+)
+
+func main() {
+	// Set version info for the CLI
+	cli.Version = version
+	cli.Commit = commit
+	cli.Date = date
+
+	// Load configuration (file defaults + env overrides)
+	cfg := config.Load()
+
+	// --- Infrastructure Layer ---
+
+	// HTTP client for Granola API
+	httpClient := &http.Client{Timeout: cfg.Resilience.Timeout}
+
+	// Granola API client (anti-corruption layer)
+	granolaClient := granola.NewClient(cfg.Granola.APIURL, httpClient, cfg.Granola.APIToken)
+
+	// Repository: Granola API → domain.Repository
+	granolaRepo := granola.NewRepository(granolaClient)
+
+	// Resilience decorator (circuit breaker, timeout, retry, rate limit)
+	resilientRepo := resilience.NewResilientRepository(granolaRepo, resilience.Config{
+		Timeout:          cfg.Resilience.Timeout,
+		MaxRetries:       cfg.Resilience.Retry.MaxAttempts,
+		RetryDelay:       cfg.Resilience.Retry.InitialDelay,
+		RetryMaxDelay:    cfg.Resilience.Retry.MaxDelay,
+		FailureThreshold: cfg.Resilience.CircuitBreaker.FailureThreshold,
+		SuccessThreshold: cfg.Resilience.CircuitBreaker.SuccessThreshold,
+		HalfOpenTimeout:  cfg.Resilience.CircuitBreaker.HalfOpenTimeout,
+		RateLimit:        cfg.Resilience.RateLimit.Rate,
+		RateBurst:        cfg.Resilience.RateLimit.Rate * 2,
+		RateInterval:     cfg.Resilience.RateLimit.Interval,
+	})
+	defer resilientRepo.Close()
+
+	// Cache decorator (SQLite local cache)
+	var repo domain.Repository = resilientRepo
+	if cfg.Cache.Enabled {
+		cacheDir := cfg.Cache.Dir
+		if err := os.MkdirAll(cacheDir, 0o700); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: cannot create cache dir: %v\n", err)
+		} else {
+			dbPath := filepath.Join(cacheDir, "cache.db")
+			db, err := sql.Open("sqlite3", dbPath)
+			if err == nil {
+				cachedRepo, cacheErr := cache.NewCachedRepository(resilientRepo, db, cfg.Cache.TTL)
+				if cacheErr == nil {
+					repo = cachedRepo
+					defer db.Close()
+				}
+			}
+		}
+	}
+
+	// Auth infrastructure
+	homeDir, _ := os.UserHomeDir()
+	tokenStore := infraauth.NewFileTokenStore(homeDir + "/.granola-mcp")
+	authService := infraauth.NewService(tokenStore)
+
+	// If we have a stored token, set it on the Granola client
+	if cred, err := authService.Status(context.Background()); err == nil && cred.IsValid() {
+		granolaClient.SetToken(cred.Token().AccessToken())
+	}
+
+	// Workspace repository
+	wsRepo := granola.NewWorkspaceRepository(granolaClient)
+
+	// --- Application Layer (Use Cases) ---
+
+	listMeetings := meetingapp.NewListMeetings(repo)
+	getMeeting := meetingapp.NewGetMeeting(repo)
+	getTranscript := meetingapp.NewGetTranscript(repo)
+	searchTranscripts := meetingapp.NewSearchTranscripts(repo)
+	getActionItems := meetingapp.NewGetActionItems(repo)
+	getMeetingStats := meetingapp.NewGetMeetingStats(repo)
+	syncMeetings := meetingapp.NewSyncMeetings(repo)
+	exportMeeting := exportapp.NewExportMeeting(repo)
+	login := authapp.NewLogin(authService)
+	checkStatus := authapp.NewCheckStatus(authService)
+	listWorkspaces := workspaceapp.NewListWorkspaces(wsRepo)
+	getWorkspace := workspaceapp.NewGetWorkspace(wsRepo)
+
+	// --- Interfaces Layer ---
+
+	// MCP server
+	mcpServer := mcpiface.NewServer(cfg.MCP.ServerName, version, mcpiface.ServerOptions{
+		ListMeetings:      listMeetings,
+		GetMeeting:        getMeeting,
+		GetTranscript:     getTranscript,
+		SearchTranscripts: searchTranscripts,
+		GetActionItems:    getActionItems,
+		GetMeetingStats:   getMeetingStats,
+		ListWorkspaces:    listWorkspaces,
+		GetWorkspace:      getWorkspace,
+	})
+
+	// CLI dependencies
+	deps := &cli.Dependencies{
+		ListMeetings:      listMeetings,
+		GetMeeting:        getMeeting,
+		GetTranscript:     getTranscript,
+		SearchTranscripts: searchTranscripts,
+		GetActionItems:    getActionItems,
+		SyncMeetings:      syncMeetings,
+		ExportMeeting:     exportMeeting,
+		Login:             login,
+		CheckStatus:       checkStatus,
+		ListWorkspaces:    listWorkspaces,
+		GetWorkspace:      getWorkspace,
+		MCPServer:         mcpServer,
+		Out:               os.Stdout,
+	}
+
+	// Execute CLI
+	if err := cli.NewRootCmd(deps).Execute(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+}
