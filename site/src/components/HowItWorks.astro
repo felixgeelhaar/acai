@@ -1,0 +1,18 @@
+---
+import DataFlowDiagram from './DataFlowDiagram.vue';
+---
+
+<section id="how-it-works">
+  <div class="max-w-5xl mx-auto px-6">
+    <div class="text-center mb-12">
+      <h2 class="text-3xl md:text-4xl font-bold text-text-primary mb-4">How It Works</h2>
+      <p class="text-text-secondary max-w-2xl mx-auto">
+        A decorator chain architecture with separate read, write, and policy paths.
+      </p>
+    </div>
+
+    <div class="max-w-2xl mx-auto">
+      <DataFlowDiagram client:visible />
+    </div>
+  </div>
+</section>

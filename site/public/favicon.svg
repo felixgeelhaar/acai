@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="g1" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#7aa2f7"/>
+      <stop offset="50%" stop-color="#bb9af7"/>
+      <stop offset="100%" stop-color="#7dcfff"/>
+    </linearGradient>
+    <linearGradient id="g2" x1="20" y1="12" x2="44" y2="52" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#bb9af7"/>
+      <stop offset="100%" stop-color="#7aa2f7"/>
+    </linearGradient>
+    <linearGradient id="stem" x1="32" y1="4" x2="32" y2="20" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#9ece6a"/>
+      <stop offset="100%" stop-color="#9ece6a" stop-opacity="0.6"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="#1a1b26"/>
+  <!-- Stem + leaf -->
+  <path d="M32 10 Q32 16 32 20" stroke="url(#stem)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <path d="M32 12 Q38 8 42 12 Q38 14 32 14" fill="#9ece6a" opacity="0.8"/>
+  <!-- Berry cluster: 3 overlapping drops -->
+  <ellipse cx="26" cy="34" rx="9" ry="12" fill="url(#g1)" opacity="0.85"/>
+  <ellipse cx="38" cy="34" rx="9" ry="12" fill="url(#g2)" opacity="0.85"/>
+  <ellipse cx="32" cy="38" rx="9" ry="12" fill="url(#g1)" opacity="0.7"/>
+  <!-- Highlight spots -->
+  <circle cx="24" cy="30" r="2.5" fill="white" opacity="0.25"/>
+  <circle cx="36" cy="30" r="2" fill="white" opacity="0.2"/>
+</svg>

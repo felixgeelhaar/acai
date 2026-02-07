@@ -1,0 +1,70 @@
+---
+import FeatureCard from './FeatureCard.astro';
+---
+
+<section id="features">
+  <div class="max-w-5xl mx-auto px-6">
+    <div class="text-center mb-12">
+      <h2 class="text-3xl md:text-4xl font-bold text-text-primary mb-4">Features</h2>
+      <p class="text-text-secondary max-w-2xl mx-auto">
+        Everything you need to integrate meeting intelligence into your agent workflows.
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <FeatureCard
+        title="MCP Server"
+        description="13 typed tools and 5 resource URIs. Meetings, transcripts, action items, notes, and interactive dashboards — all queryable by AI agents."
+        icon="⚡"
+        color="accent"
+      >
+        <code class="text-xs text-text-muted bg-bg-secondary px-2 py-1 rounded">acai serve</code>
+      </FeatureCard>
+
+      <FeatureCard
+        title="CLI"
+        description="Authenticate, sync, search, export, annotate, and manage meetings from the terminal. Table, JSON, and markdown output."
+        icon="💻"
+        color="accent-secondary"
+      >
+        <code class="text-xs text-text-muted bg-bg-secondary px-2 py-1 rounded">acai list meetings --format json</code>
+      </FeatureCard>
+
+      <FeatureCard
+        title="Write-Back"
+        description="Agent-generated notes and action item updates persisted locally with outbox pattern for future upstream sync."
+        icon="✏️"
+        color="green"
+      >
+        <code class="text-xs text-text-muted bg-bg-secondary px-2 py-1 rounded">add_note / complete_action_item</code>
+      </FeatureCard>
+
+      <FeatureCard
+        title="Agent Policies"
+        description="Per-meeting ACL with allow/deny rules by tool and tags. Content redaction for emails, speakers, keywords, and patterns."
+        icon="🛡️"
+        color="orange"
+      >
+        <code class="text-xs text-text-muted bg-bg-secondary px-2 py-1 rounded">ACAI_POLICY_FILE=policy.yaml</code>
+      </FeatureCard>
+
+      <FeatureCard
+        title="Resilience"
+        description="Circuit breaker, retry with exponential backoff, rate limiting, and timeouts on every API call via Fortify."
+        icon="🔄"
+        color="red"
+      >
+        <code class="text-xs text-text-muted bg-bg-secondary px-2 py-1 rounded">5 failures → circuit opens</code>
+      </FeatureCard>
+
+      <FeatureCard
+        title="Caching"
+        description="SQLite local cache reduces API calls and enables offline access. Configurable TTL with graceful stale-data fallback."
+        icon="💾"
+        color="cyan"
+      >
+        <code class="text-xs text-text-muted bg-bg-secondary px-2 py-1 rounded">ACAI_CACHE_TTL=15m</code>
+      </FeatureCard>
+    </div>
+  </div>
+</section>

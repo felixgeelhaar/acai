@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
-	"github.com/felixgeelhaar/granola-mcp/internal/infrastructure/cache"
+	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
+	"github.com/felixgeelhaar/acai/internal/infrastructure/cache"
 	_ "github.com/mattn/go-sqlite3"
 )
 

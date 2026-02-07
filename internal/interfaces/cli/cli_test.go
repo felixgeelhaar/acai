@@ -7,18 +7,18 @@ import (
 	"testing"
 	"time"
 
-	annotationapp "github.com/felixgeelhaar/granola-mcp/internal/application/annotation"
-	authapp "github.com/felixgeelhaar/granola-mcp/internal/application/auth"
-	embeddingapp "github.com/felixgeelhaar/granola-mcp/internal/application/embedding"
-	exportapp "github.com/felixgeelhaar/granola-mcp/internal/application/export"
-	meetingapp "github.com/felixgeelhaar/granola-mcp/internal/application/meeting"
-	workspaceapp "github.com/felixgeelhaar/granola-mcp/internal/application/workspace"
-	"github.com/felixgeelhaar/granola-mcp/internal/domain/annotation"
-	domainauth "github.com/felixgeelhaar/granola-mcp/internal/domain/auth"
-	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
-	"github.com/felixgeelhaar/granola-mcp/internal/domain/workspace"
-	"github.com/felixgeelhaar/granola-mcp/internal/interfaces/cli"
-	mcpiface "github.com/felixgeelhaar/granola-mcp/internal/interfaces/mcp"
+	annotationapp "github.com/felixgeelhaar/acai/internal/application/annotation"
+	authapp "github.com/felixgeelhaar/acai/internal/application/auth"
+	embeddingapp "github.com/felixgeelhaar/acai/internal/application/embedding"
+	exportapp "github.com/felixgeelhaar/acai/internal/application/export"
+	meetingapp "github.com/felixgeelhaar/acai/internal/application/meeting"
+	workspaceapp "github.com/felixgeelhaar/acai/internal/application/workspace"
+	"github.com/felixgeelhaar/acai/internal/domain/annotation"
+	domainauth "github.com/felixgeelhaar/acai/internal/domain/auth"
+	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
+	"github.com/felixgeelhaar/acai/internal/domain/workspace"
+	"github.com/felixgeelhaar/acai/internal/interfaces/cli"
+	mcpiface "github.com/felixgeelhaar/acai/internal/interfaces/mcp"
 )
 
 func TestRootCmd_HasExpectedSubcommands(t *testing.T) {
@@ -52,8 +52,8 @@ func TestVersionCmd(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if !strings.Contains(buf.String(), "granola-mcp") {
-		t.Errorf("version output should contain 'granola-mcp': %q", buf.String())
+	if !strings.Contains(buf.String(), "acai") {
+		t.Errorf("version output should contain 'acai': %q", buf.String())
 	}
 }
 
@@ -292,7 +292,7 @@ func testDeps(t *testing.T) *cli.Dependencies {
 		CompleteActionItem: meetingapp.NewCompleteActionItem(repo, writeRepo, dispatcher),
 		UpdateActionItem:   meetingapp.NewUpdateActionItem(repo, writeRepo, dispatcher),
 		ExportEmbeddings:   embeddingapp.NewExportEmbeddings(repo, noteRepo),
-		MCPServer: mcpiface.NewServer("granola-mcp", "test", mcpiface.ServerOptions{
+		MCPServer: mcpiface.NewServer("acai", "test", mcpiface.ServerOptions{
 			ListMeetings:      meetingapp.NewListMeetings(repo),
 			GetMeeting:        meetingapp.NewGetMeeting(repo),
 			GetTranscript:     meetingapp.NewGetTranscript(repo),

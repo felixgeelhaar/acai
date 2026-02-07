@@ -1,8 +1,8 @@
-project_name: granola-mcp
+project_name: acai
 
 builds:
-  - main: ./cmd/granola-mcp
-    binary: granola-mcp
+  - main: ./cmd/acai
+    binary: acai
     env:
       - CGO_ENABLED=1
     goos:
@@ -32,20 +32,20 @@ archives:
     name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
 
 brews:
-  - name: granola-mcp
+  - name: acai
     repository:
       owner: felixgeelhaar
       name: homebrew-tap
-    homepage: "https://github.com/felixgeelhaar/granola-mcp"
+    homepage: "https://felixgeelhaar.github.io/acai/"
     description: "Granola meeting intelligence for the MCP ecosystem"
     license: "MIT"
     dependencies:
       - name: sqlite
         type: optional
     install: |
-      bin.install "granola-mcp"
+      bin.install "acai"
     test: |
-      system "#{bin}/granola-mcp", "version"
+      system "#{bin}/acai", "version"
 
 checksum:
   name_template: "checksums.txt"

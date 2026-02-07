@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
+	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
 )
 
 // writeEventTypes are the event types that should be persisted to the outbox.

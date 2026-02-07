@@ -10,7 +10,7 @@ import (
 	"encoding/json"
 	"time"
 
-	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
+	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
 )
 
 // CachedRepository decorates a domain.Repository with local SQLite caching.

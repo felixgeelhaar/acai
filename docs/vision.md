@@ -16,7 +16,7 @@ Meeting knowledge is trapped. Granola captures high-quality transcripts, summari
 
 ### The Vision
 
-A single binary — `granola-mcp` — that makes meeting intelligence a first-class citizen in the MCP ecosystem.
+A single binary — `acai` — that makes meeting intelligence a first-class citizen in the MCP ecosystem.
 
 **For power users**: A CLI to authenticate, sync, search, and export meeting data in human-readable or machine-readable formats.
 

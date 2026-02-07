@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	meetingapp "github.com/felixgeelhaar/granola-mcp/internal/application/meeting"
+	meetingapp "github.com/felixgeelhaar/acai/internal/application/meeting"
 	"github.com/spf13/cobra"
 )
 

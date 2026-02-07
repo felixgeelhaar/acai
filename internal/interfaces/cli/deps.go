@@ -6,14 +6,14 @@ import (
 	"io"
 	"net/http"
 
-	annotationapp "github.com/felixgeelhaar/granola-mcp/internal/application/annotation"
-	authapp "github.com/felixgeelhaar/granola-mcp/internal/application/auth"
-	embeddingapp "github.com/felixgeelhaar/granola-mcp/internal/application/embedding"
-	exportapp "github.com/felixgeelhaar/granola-mcp/internal/application/export"
-	meetingapp "github.com/felixgeelhaar/granola-mcp/internal/application/meeting"
-	workspaceapp "github.com/felixgeelhaar/granola-mcp/internal/application/workspace"
-	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
-	mcpiface "github.com/felixgeelhaar/granola-mcp/internal/interfaces/mcp"
+	annotationapp "github.com/felixgeelhaar/acai/internal/application/annotation"
+	authapp "github.com/felixgeelhaar/acai/internal/application/auth"
+	embeddingapp "github.com/felixgeelhaar/acai/internal/application/embedding"
+	exportapp "github.com/felixgeelhaar/acai/internal/application/export"
+	meetingapp "github.com/felixgeelhaar/acai/internal/application/meeting"
+	workspaceapp "github.com/felixgeelhaar/acai/internal/application/workspace"
+	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
+	mcpiface "github.com/felixgeelhaar/acai/internal/interfaces/mcp"
 )
 
 // Dependencies holds all injected use cases for the CLI.

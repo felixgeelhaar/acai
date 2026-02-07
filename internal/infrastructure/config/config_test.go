@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/granola-mcp/internal/infrastructure/config"
+	"github.com/felixgeelhaar/acai/internal/infrastructure/config"
 )
 
 func TestDefault_HasSaneDefaults(t *testing.T) {
@@ -16,7 +16,7 @@ func TestDefault_HasSaneDefaults(t *testing.T) {
 	if cfg.MCP.Transport != "stdio" {
 		t.Errorf("got transport %q", cfg.MCP.Transport)
 	}
-	if cfg.MCP.ServerName != "granola-mcp" {
+	if cfg.MCP.ServerName != "acai" {
 		t.Errorf("got server name %q", cfg.MCP.ServerName)
 	}
 	if cfg.Cache.TTL != 15*time.Minute {
@@ -34,10 +34,10 @@ func TestDefault_HasSaneDefaults(t *testing.T) {
 }
 
 func TestLoad_OverridesFromEnv(t *testing.T) {
-	t.Setenv("GRANOLA_MCP_GRANOLA_API_URL", "https://custom.api.com")
-	t.Setenv("GRANOLA_MCP_GRANOLA_API_TOKEN", "test-token")
-	t.Setenv("GRANOLA_MCP_LOGGING_LEVEL", "debug")
-	t.Setenv("GRANOLA_MCP_MCP_HTTP_PORT", "9090")
+	t.Setenv("ACAI_GRANOLA_API_URL", "https://custom.api.com")
+	t.Setenv("ACAI_GRANOLA_API_TOKEN", "test-token")
+	t.Setenv("ACAI_LOGGING_LEVEL", "debug")
+	t.Setenv("ACAI_MCP_HTTP_PORT", "9090")
 
 	cfg := config.Load()
 
@@ -59,7 +59,7 @@ func TestLoad_OverridesFromEnv(t *testing.T) {
 }
 
 func TestLoad_PolicyFileEnv(t *testing.T) {
-	t.Setenv("GRANOLA_MCP_POLICY_FILE", "/etc/granola/policy.yaml")
+	t.Setenv("ACAI_POLICY_FILE", "/etc/granola/policy.yaml")
 
 	cfg := config.Load()
 

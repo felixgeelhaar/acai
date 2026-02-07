@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	meetingapp "github.com/felixgeelhaar/granola-mcp/internal/application/meeting"
-	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
+	meetingapp "github.com/felixgeelhaar/acai/internal/application/meeting"
+	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
 )
 
 // Manager runs periodic meeting sync in the background.

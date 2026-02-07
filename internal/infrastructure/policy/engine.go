@@ -1,7 +1,7 @@
 package policy
 
 import (
-	domainpolicy "github.com/felixgeelhaar/granola-mcp/internal/domain/policy"
+	domainpolicy "github.com/felixgeelhaar/acai/internal/domain/policy"
 )
 
 // Engine wraps a domain Policy and a Redactor for the MCP middleware.

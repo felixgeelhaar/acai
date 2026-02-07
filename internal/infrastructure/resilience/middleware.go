@@ -8,7 +8,7 @@ import (
 	"context"
 	"time"
 
-	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
+	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
 	"github.com/felixgeelhaar/fortify/circuitbreaker"
 	"github.com/felixgeelhaar/fortify/ratelimit"
 	"github.com/felixgeelhaar/fortify/retry"

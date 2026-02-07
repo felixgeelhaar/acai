@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	app "github.com/felixgeelhaar/granola-mcp/internal/application/annotation"
-	annotatn "github.com/felixgeelhaar/granola-mcp/internal/domain/annotation"
+	app "github.com/felixgeelhaar/acai/internal/application/annotation"
+	annotatn "github.com/felixgeelhaar/acai/internal/domain/annotation"
 )
 
 func TestListNotes_Found(t *testing.T) {

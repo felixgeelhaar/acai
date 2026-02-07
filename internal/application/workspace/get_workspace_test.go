@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	workspaceapp "github.com/felixgeelhaar/granola-mcp/internal/application/workspace"
-	"github.com/felixgeelhaar/granola-mcp/internal/domain/workspace"
+	workspaceapp "github.com/felixgeelhaar/acai/internal/application/workspace"
+	"github.com/felixgeelhaar/acai/internal/domain/workspace"
 )
 
 func TestGetWorkspace_Found(t *testing.T) {

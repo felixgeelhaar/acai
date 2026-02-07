@@ -3,7 +3,7 @@ package auth
 import (
 	"context"
 
-	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/auth"
+	domain "github.com/felixgeelhaar/acai/internal/domain/auth"
 )
 
 type CheckStatusOutput struct {

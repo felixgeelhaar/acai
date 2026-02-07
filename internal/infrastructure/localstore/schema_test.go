@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"testing"
 
-	"github.com/felixgeelhaar/granola-mcp/internal/infrastructure/localstore"
+	"github.com/felixgeelhaar/acai/internal/infrastructure/localstore"
 	_ "github.com/mattn/go-sqlite3"
 )
 

@@ -9,16 +9,16 @@ import (
 	"testing"
 	"time"
 
-	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
-	"github.com/felixgeelhaar/granola-mcp/internal/domain/workspace"
-	mcpiface "github.com/felixgeelhaar/granola-mcp/internal/interfaces/mcp"
+	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
+	"github.com/felixgeelhaar/acai/internal/domain/workspace"
+	mcpiface "github.com/felixgeelhaar/acai/internal/interfaces/mcp"
 )
 
 func TestServer_NameAndVersion(t *testing.T) {
 	repo := newMockRepo()
 	srv := newTestServer(repo)
 
-	if srv.Name() != "granola-mcp" {
+	if srv.Name() != "acai" {
 		t.Errorf("got name %q", srv.Name())
 	}
 	if srv.Version() != "test" {

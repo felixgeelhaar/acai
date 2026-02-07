@@ -1,4 +1,4 @@
-// Package main is the composition root for granola-mcp.
+// Package main is the composition root for acai.
 // All dependencies are wired here — no service locator, no global state.
 // This is the only place that knows about all layers simultaneously.
 package main
@@ -11,24 +11,24 @@ import (
 	"os"
 	"path/filepath"
 
-	annotationapp "github.com/felixgeelhaar/granola-mcp/internal/application/annotation"
-	authapp "github.com/felixgeelhaar/granola-mcp/internal/application/auth"
-	embeddingapp "github.com/felixgeelhaar/granola-mcp/internal/application/embedding"
-	exportapp "github.com/felixgeelhaar/granola-mcp/internal/application/export"
-	meetingapp "github.com/felixgeelhaar/granola-mcp/internal/application/meeting"
-	workspaceapp "github.com/felixgeelhaar/granola-mcp/internal/application/workspace"
-	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
-	infraauth "github.com/felixgeelhaar/granola-mcp/internal/infrastructure/auth"
-	"github.com/felixgeelhaar/granola-mcp/internal/infrastructure/cache"
-	"github.com/felixgeelhaar/granola-mcp/internal/infrastructure/config"
-	"github.com/felixgeelhaar/granola-mcp/internal/infrastructure/events"
-	"github.com/felixgeelhaar/granola-mcp/internal/infrastructure/granola"
-	"github.com/felixgeelhaar/granola-mcp/internal/infrastructure/localstore"
-	"github.com/felixgeelhaar/granola-mcp/internal/infrastructure/outbox"
-	infraPolicy "github.com/felixgeelhaar/granola-mcp/internal/infrastructure/policy"
-	"github.com/felixgeelhaar/granola-mcp/internal/infrastructure/resilience"
-	"github.com/felixgeelhaar/granola-mcp/internal/interfaces/cli"
-	mcpiface "github.com/felixgeelhaar/granola-mcp/internal/interfaces/mcp"
+	annotationapp "github.com/felixgeelhaar/acai/internal/application/annotation"
+	authapp "github.com/felixgeelhaar/acai/internal/application/auth"
+	embeddingapp "github.com/felixgeelhaar/acai/internal/application/embedding"
+	exportapp "github.com/felixgeelhaar/acai/internal/application/export"
+	meetingapp "github.com/felixgeelhaar/acai/internal/application/meeting"
+	workspaceapp "github.com/felixgeelhaar/acai/internal/application/workspace"
+	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
+	infraauth "github.com/felixgeelhaar/acai/internal/infrastructure/auth"
+	"github.com/felixgeelhaar/acai/internal/infrastructure/cache"
+	"github.com/felixgeelhaar/acai/internal/infrastructure/config"
+	"github.com/felixgeelhaar/acai/internal/infrastructure/events"
+	"github.com/felixgeelhaar/acai/internal/infrastructure/granola"
+	"github.com/felixgeelhaar/acai/internal/infrastructure/localstore"
+	"github.com/felixgeelhaar/acai/internal/infrastructure/outbox"
+	infraPolicy "github.com/felixgeelhaar/acai/internal/infrastructure/policy"
+	"github.com/felixgeelhaar/acai/internal/infrastructure/resilience"
+	"github.com/felixgeelhaar/acai/internal/interfaces/cli"
+	mcpiface "github.com/felixgeelhaar/acai/internal/interfaces/mcp"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -94,7 +94,7 @@ func main() {
 
 	// Auth infrastructure
 	homeDir, _ := os.UserHomeDir()
-	tokenStore := infraauth.NewFileTokenStore(homeDir + "/.granola-mcp")
+	tokenStore := infraauth.NewFileTokenStore(homeDir + "/.acai")
 	authService := infraauth.NewService(tokenStore)
 
 	// If we have a stored token, set it on the Granola client

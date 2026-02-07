@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"time"
 
-	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
+	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
 )
 
 // WriteRepository implements domain.WriteRepository using SQLite.

@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/granola-mcp/internal/infrastructure/granola"
+	"github.com/felixgeelhaar/acai/internal/infrastructure/granola"
 )
 
 func TestClient_GetDocuments(t *testing.T) {

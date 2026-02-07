@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	embeddingapp "github.com/felixgeelhaar/granola-mcp/internal/application/embedding"
-	exportapp "github.com/felixgeelhaar/granola-mcp/internal/application/export"
-	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
+	embeddingapp "github.com/felixgeelhaar/acai/internal/application/embedding"
+	exportapp "github.com/felixgeelhaar/acai/internal/application/export"
+	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
 	"github.com/spf13/cobra"
 )
 

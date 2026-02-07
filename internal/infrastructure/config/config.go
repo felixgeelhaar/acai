@@ -93,36 +93,36 @@ type LoggingConfig struct {
 func Load() *Config {
 	cfg := Default()
 
-	if v := os.Getenv("GRANOLA_MCP_GRANOLA_API_URL"); v != "" {
+	if v := os.Getenv("ACAI_GRANOLA_API_URL"); v != "" {
 		cfg.Granola.APIURL = v
 	}
-	if v := os.Getenv("GRANOLA_MCP_GRANOLA_API_TOKEN"); v != "" {
+	if v := os.Getenv("ACAI_GRANOLA_API_TOKEN"); v != "" {
 		cfg.Granola.APIToken = v
 		cfg.Granola.AuthMethod = "api_token"
 	}
-	if v := os.Getenv("GRANOLA_MCP_MCP_TRANSPORT"); v != "" {
+	if v := os.Getenv("ACAI_MCP_TRANSPORT"); v != "" {
 		cfg.MCP.Transport = v
 	}
-	if v := os.Getenv("GRANOLA_MCP_MCP_HTTP_PORT"); v != "" {
+	if v := os.Getenv("ACAI_MCP_HTTP_PORT"); v != "" {
 		if port, err := strconv.Atoi(v); err == nil {
 			cfg.MCP.HTTPPort = port
 		}
 	}
-	if v := os.Getenv("GRANOLA_MCP_CACHE_TTL"); v != "" {
+	if v := os.Getenv("ACAI_CACHE_TTL"); v != "" {
 		if d, err := time.ParseDuration(v); err == nil {
 			cfg.Cache.TTL = d
 		}
 	}
-	if v := os.Getenv("GRANOLA_MCP_LOGGING_LEVEL"); v != "" {
+	if v := os.Getenv("ACAI_LOGGING_LEVEL"); v != "" {
 		cfg.Logging.Level = v
 	}
-	if v := os.Getenv("GRANOLA_MCP_LOGGING_FORMAT"); v != "" {
+	if v := os.Getenv("ACAI_LOGGING_FORMAT"); v != "" {
 		cfg.Logging.Format = v
 	}
-	if v := os.Getenv("GRANOLA_MCP_WEBHOOK_SECRET"); v != "" {
+	if v := os.Getenv("ACAI_WEBHOOK_SECRET"); v != "" {
 		cfg.Webhook.Secret = v
 	}
-	if v := os.Getenv("GRANOLA_MCP_POLICY_FILE"); v != "" {
+	if v := os.Getenv("ACAI_POLICY_FILE"); v != "" {
 		cfg.Policy.FilePath = v
 		cfg.Policy.Enabled = true
 	}
@@ -138,7 +138,7 @@ func Default() *Config {
 			AuthMethod: "oauth",
 		},
 		MCP: MCPConfig{
-			ServerName: "granola-mcp",
+			ServerName: "acai",
 			Transport:  "stdio",
 			HTTPPort:   8080,
 			EnabledResources: []string{
@@ -147,7 +147,7 @@ func Default() *Config {
 		},
 		Cache: CacheConfig{
 			Enabled: true,
-			Dir:     filepath.Join(homeDir, ".granola-mcp", "cache"),
+			Dir:     filepath.Join(homeDir, ".acai", "cache"),
 			TTL:     15 * time.Minute,
 		},
 		Resilience: ResilienceConfig{

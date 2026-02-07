@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
+	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
 )
 
 // ExportFormat defines how chunks are serialized for output.

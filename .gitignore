@@ -1,7 +1,7 @@
 # Binaries
 bin/
 dist/
-/granola-mcp
+/acai
 
 # Go
 *.exe
@@ -36,6 +36,11 @@ Thumbs.db
 *.db-journal
 *.db-wal
 *.db-shm
+
+# Site build output
+site/dist/
+site/node_modules/
+site/.astro/
 
 # Claude Code
 .claude/settings.local.json

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/felixgeelhaar/granola-mcp/internal/infrastructure/events"
+	"github.com/felixgeelhaar/acai/internal/infrastructure/events"
 )
 
 type mockSession struct {

@@ -30,8 +30,8 @@ changelog:
     includedate: true
     linkcommits: true
     linkissues: true
-    repositoryurl: https://github.com/felixgeelhaar/granola-mcp
-    issueurl: https://github.com/felixgeelhaar/granola-mcp/issues
+    repositoryurl: https://github.com/felixgeelhaar/acai
+    issueurl: https://github.com/felixgeelhaar/acai/issues
     exclude:
         - chore
         - ci

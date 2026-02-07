@@ -6,14 +6,14 @@ import (
 	"testing"
 	"time"
 
-	annotationapp "github.com/felixgeelhaar/granola-mcp/internal/application/annotation"
-	embeddingapp "github.com/felixgeelhaar/granola-mcp/internal/application/embedding"
-	meetingapp "github.com/felixgeelhaar/granola-mcp/internal/application/meeting"
-	workspaceapp "github.com/felixgeelhaar/granola-mcp/internal/application/workspace"
-	annotatn "github.com/felixgeelhaar/granola-mcp/internal/domain/annotation"
-	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
-	"github.com/felixgeelhaar/granola-mcp/internal/domain/workspace"
-	mcpiface "github.com/felixgeelhaar/granola-mcp/internal/interfaces/mcp"
+	annotationapp "github.com/felixgeelhaar/acai/internal/application/annotation"
+	embeddingapp "github.com/felixgeelhaar/acai/internal/application/embedding"
+	meetingapp "github.com/felixgeelhaar/acai/internal/application/meeting"
+	workspaceapp "github.com/felixgeelhaar/acai/internal/application/workspace"
+	annotatn "github.com/felixgeelhaar/acai/internal/domain/annotation"
+	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
+	"github.com/felixgeelhaar/acai/internal/domain/workspace"
+	mcpiface "github.com/felixgeelhaar/acai/internal/interfaces/mcp"
 )
 
 func TestServer_HandleListMeetings(t *testing.T) {
@@ -397,12 +397,12 @@ func testDeps(repo *mockRepo) (mcpiface.ServerOptions, *mockNoteRepo, *mockWrite
 
 func newTestServer(repo *mockRepo) *mcpiface.Server {
 	opts, _, _ := testDeps(repo)
-	return mcpiface.NewServer("granola-mcp", "test", opts)
+	return mcpiface.NewServer("acai", "test", opts)
 }
 
 func newTestServerWithWorkspaces(repo *mockRepo, wsRepo *mockWorkspaceRepo) *mcpiface.Server {
 	opts, _, _ := testDeps(repo)
 	opts.ListWorkspaces = workspaceapp.NewListWorkspaces(wsRepo)
 	opts.GetWorkspace = workspaceapp.NewGetWorkspace(wsRepo)
-	return mcpiface.NewServer("granola-mcp", "test", opts)
+	return mcpiface.NewServer("acai", "test", opts)
 }

@@ -1,0 +1,53 @@
+---
+const problems = [
+  {
+    title: 'Knowledge Silos',
+    description: 'Meeting insights live in the app where they were captured. Getting them into downstream tools means manual copy-paste.',
+    icon: '🔒',
+  },
+  {
+    title: 'Missing Automation',
+    description: 'Going from "meeting happened" to "ticket created, notes filed, follow-ups scheduled" still requires human glue.',
+    icon: '⛓️‍💥',
+  },
+  {
+    title: 'Agent Blindness',
+    description: 'AI agents can\'t yet reference past meetings, search transcripts, or act on action items without a bridge.',
+    icon: '🙈',
+  },
+];
+---
+
+<section class="bg-bg-secondary" id="problem">
+  <div class="max-w-5xl mx-auto px-6">
+    <div class="text-center mb-12">
+      <h2 class="text-3xl md:text-4xl font-bold text-text-primary mb-4">Meeting Knowledge Deserves an API</h2>
+      <p class="text-text-secondary max-w-2xl mx-auto">
+        Granola captures high-quality transcripts, summaries, and action items.
+        acai extends that intelligence into the MCP ecosystem so AI agents can use it too.
+      </p>
+    </div>
+
+    <!-- Problem cards -->
+    <div class="grid md:grid-cols-3 gap-6 mb-12">
+      {problems.map((problem) => (
+        <div class="rounded-lg border border-red/20 bg-bg-card p-6 hover:border-red/40 transition-colors">
+          <div class="text-3xl mb-4">{problem.icon}</div>
+          <h3 class="text-lg font-semibold text-red mb-2">{problem.title}</h3>
+          <p class="text-sm text-text-secondary">{problem.description}</p>
+        </div>
+      ))}
+    </div>
+
+    <!-- Solution -->
+    <div class="rounded-lg border border-green/20 bg-bg-card p-8 text-center hover:border-green/40 transition-colors">
+      <div class="text-4xl mb-4">🍵</div>
+      <h3 class="text-xl font-semibold text-green mb-3">The Solution: Structured MCP Resources</h3>
+      <p class="text-text-secondary max-w-2xl mx-auto">
+        A single binary &mdash; <code class="text-accent bg-bg-secondary px-1.5 py-0.5 rounded text-sm">acai</code> &mdash;
+        that makes meeting intelligence a first-class citizen in the MCP ecosystem. For power users: a CLI.
+        For agents: typed tools and resources. For teams: production-grade reliability and fine-grained access control.
+      </p>
+    </div>
+  </div>
+</section>

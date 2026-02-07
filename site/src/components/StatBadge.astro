@@ -1,0 +1,23 @@
+---
+interface Props {
+  value: string;
+  label: string;
+  color?: 'accent' | 'accent-secondary' | 'green' | 'orange' | 'red' | 'cyan';
+}
+
+const { value, label, color = 'accent' } = Astro.props;
+
+const colorMap = {
+  accent: 'bg-accent/10 text-accent border-accent/20',
+  'accent-secondary': 'bg-accent-secondary/10 text-accent-secondary border-accent-secondary/20',
+  green: 'bg-green/10 text-green border-green/20',
+  orange: 'bg-orange/10 text-orange border-orange/20',
+  red: 'bg-red/10 text-red border-red/20',
+  cyan: 'bg-cyan/10 text-cyan border-cyan/20',
+};
+---
+
+<div class={`inline-flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium ${colorMap[color]}`}>
+  <span class="font-bold">{value}</span>
+  <span class="opacity-75">{label}</span>
+</div>

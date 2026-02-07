@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	app "github.com/felixgeelhaar/granola-mcp/internal/application/meeting"
+	app "github.com/felixgeelhaar/acai/internal/application/meeting"
 )
 
 func TestSearchTranscripts_DelegatesToRepository(t *testing.T) {

@@ -7,8 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/felixgeelhaar/granola-mcp/internal/domain/workspace"
-	"github.com/felixgeelhaar/granola-mcp/internal/infrastructure/granola"
+	"github.com/felixgeelhaar/acai/internal/domain/workspace"
+	"github.com/felixgeelhaar/acai/internal/infrastructure/granola"
 )
 
 func TestWorkspaceRepository_List_ReturnsMappedWorkspaces(t *testing.T) {

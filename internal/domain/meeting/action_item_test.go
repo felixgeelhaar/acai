@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
+	"github.com/felixgeelhaar/acai/internal/domain/meeting"
 )
 
 func TestNewActionItem_Valid(t *testing.T) {

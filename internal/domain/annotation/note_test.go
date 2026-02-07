@@ -3,7 +3,7 @@ package annotation_test
 import (
 	"testing"
 
-	"github.com/felixgeelhaar/granola-mcp/internal/domain/annotation"
+	"github.com/felixgeelhaar/acai/internal/domain/annotation"
 )
 
 func TestNewAgentNote_Valid(t *testing.T) {

@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
-	"github.com/felixgeelhaar/granola-mcp/internal/infrastructure/resilience"
+	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
+	"github.com/felixgeelhaar/acai/internal/infrastructure/resilience"
 )
 
 type stubRepo struct {

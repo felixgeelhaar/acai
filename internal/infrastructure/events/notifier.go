@@ -4,7 +4,7 @@ import (
 	"log"
 	"sync"
 
-	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
+	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
 )
 
 // SessionNotifier can send notifications to a specific MCP session.

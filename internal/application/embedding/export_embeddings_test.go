@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/granola-mcp/internal/domain/annotation"
-	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
+	"github.com/felixgeelhaar/acai/internal/domain/annotation"
+	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
 )
 
 // --- Mocks ---

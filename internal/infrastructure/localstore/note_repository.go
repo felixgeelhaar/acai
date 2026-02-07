@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/felixgeelhaar/granola-mcp/internal/domain/annotation"
+	"github.com/felixgeelhaar/acai/internal/domain/annotation"
 )
 
 // NoteRepository implements annotation.NoteRepository using SQLite.

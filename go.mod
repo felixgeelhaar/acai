@@ -1,4 +1,4 @@
-module github.com/felixgeelhaar/granola-mcp
+module github.com/felixgeelhaar/acai
 
 go 1.25.6
 

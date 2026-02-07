@@ -113,12 +113,12 @@ Support MCP event streaming:
 
 ### Core Commands
 
-- `granola-mcp auth login`
-- `granola-mcp auth status`
-- `granola-mcp sync`
-- `granola-mcp list meetings`
-- `granola-mcp export meeting <id>`
-- `granola-mcp serve` (starts MCP server)
+- `acai auth login`
+- `acai auth status`
+- `acai sync`
+- `acai list meetings`
+- `acai export meeting <id>`
+- `acai serve` (starts MCP server)
 
 ### Flags
 
@@ -144,7 +144,7 @@ Support MCP event streaming:
 
 ## Configuration
 
-Config file (`~/.granola-mcp.yaml`):
+Config file (`~/.acai.yaml`):
 
 - enabled_resources
 - polling_interval

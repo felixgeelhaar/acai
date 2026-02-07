@@ -1,4 +1,4 @@
-# granola-mcp — What It Does and How It Works
+# acai — What It Does and How It Works
 
 ## What It Is
 
@@ -37,7 +37,7 @@ Granola Cloud API
   └─────────┘
 ```
 
-When an agent calls `get_meeting` or a user runs `granola-mcp list meetings`, the request flows through the decorator chain. If the cache has a fresh copy, it returns immediately without hitting the Granola API. If the API is down, the circuit breaker trips and returns the cached version. Every external call has a timeout, retry logic, and rate limiting.
+When an agent calls `get_meeting` or a user runs `acai list meetings`, the request flows through the decorator chain. If the cache has a fresh copy, it returns immediately without hitting the Granola API. If the API is down, the circuit breaker trips and returns the cached version. Every external call has a timeout, retry logic, and rate limiting.
 
 ### Data Flow (Write Path)
 
@@ -118,26 +118,26 @@ The server dispatches domain events (`MeetingCreated`, `TranscriptUpdated`, `Not
 
 ```bash
 # Authentication
-granola-mcp auth login --method api_token    # Set API token
-granola-mcp auth status                      # Check auth state
+acai auth login --method api_token    # Set API token
+acai auth status                      # Check auth state
 
 # Read operations
-granola-mcp list meetings --since 2025-01-01 --source zoom --format json
-granola-mcp export meeting <id> --format md
+acai list meetings --since 2025-01-01 --source zoom --format json
+acai export meeting <id> --format md
 
 # Write operations
-granola-mcp note add <meeting-id> "Agent observation about Q4 targets"
-granola-mcp note list <meeting-id>
-granola-mcp note delete <note-id>
-granola-mcp action complete <meeting-id> <action-item-id>
-granola-mcp action update <meeting-id> <action-item-id> "Revised text"
+acai note add <meeting-id> "Agent observation about Q4 targets"
+acai note list <meeting-id>
+acai note delete <note-id>
+acai action complete <meeting-id> <action-item-id>
+acai action update <meeting-id> <action-item-id> "Revised text"
 
 # Embedding export
-granola-mcp export embeddings --meetings m-1,m-2 --strategy speaker_turn --max-tokens 512
+acai export embeddings --meetings m-1,m-2 --strategy speaker_turn --max-tokens 512
 
 # Sync & serve
-granola-mcp sync --since 2025-01-01
-granola-mcp serve                            # Start MCP server on stdio
+acai sync --since 2025-01-01
+acai serve                            # Start MCP server on stdio
 ```
 
 ---
@@ -184,7 +184,7 @@ Inbound adapters:
 - `mcp/` — MCP server (tools, resources, handlers, policy middleware) built on [mcp-go](https://github.com/felixgeelhaar/mcp-go)
 - `cli/` — Cobra commands mapping 1:1 to use cases
 
-### Composition Root (`cmd/granola-mcp/main.go`)
+### Composition Root (`cmd/acai/main.go`)
 
 The only place that knows about all layers. Wires everything with constructor injection, no service locator.
 

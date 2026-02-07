@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/felixgeelhaar/granola-mcp/internal/interfaces/cli"
+	"github.com/felixgeelhaar/acai/internal/interfaces/cli"
 )
 
 func TestListMeetingsCmd_TableFormat(t *testing.T) {

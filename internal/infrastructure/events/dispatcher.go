@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"log"
 
-	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
+	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
 )
 
 // Dispatcher maps domain events to resource URIs and calls the notifier.

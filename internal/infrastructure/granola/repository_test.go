@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
-	"github.com/felixgeelhaar/granola-mcp/internal/infrastructure/granola"
+	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
+	"github.com/felixgeelhaar/acai/internal/infrastructure/granola"
 )
 
 func TestRepository_FindByID(t *testing.T) {

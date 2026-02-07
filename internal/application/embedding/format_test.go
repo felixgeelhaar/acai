@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
+	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
 )
 
 func TestJSONLFormat_Empty(t *testing.T) {

@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"os"
 
-	domainpolicy "github.com/felixgeelhaar/granola-mcp/internal/domain/policy"
+	domainpolicy "github.com/felixgeelhaar/acai/internal/domain/policy"
 	"gopkg.in/yaml.v3"
 )
 

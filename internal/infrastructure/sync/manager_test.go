@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	meetingapp "github.com/felixgeelhaar/granola-mcp/internal/application/meeting"
-	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
-	syncmgr "github.com/felixgeelhaar/granola-mcp/internal/infrastructure/sync"
+	meetingapp "github.com/felixgeelhaar/acai/internal/application/meeting"
+	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
+	syncmgr "github.com/felixgeelhaar/acai/internal/infrastructure/sync"
 )
 
 // mockRepo implements domain.Repository for testing.

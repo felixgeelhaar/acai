@@ -9,8 +9,8 @@ import (
 	"log"
 	"net/http"
 
-	meetingapp "github.com/felixgeelhaar/granola-mcp/internal/application/meeting"
-	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
+	meetingapp "github.com/felixgeelhaar/acai/internal/application/meeting"
+	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
 )
 
 // Handler receives Granola webhook events and triggers sync + event dispatch.

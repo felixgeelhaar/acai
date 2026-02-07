@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/granola-mcp/internal/application/export"
-	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
+	"github.com/felixgeelhaar/acai/internal/application/export"
+	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
 )
 
 type mockRepo struct {

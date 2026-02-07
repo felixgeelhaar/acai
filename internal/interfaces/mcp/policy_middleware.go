@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	domainpolicy "github.com/felixgeelhaar/granola-mcp/internal/domain/policy"
-	policy "github.com/felixgeelhaar/granola-mcp/internal/infrastructure/policy"
+	domainpolicy "github.com/felixgeelhaar/acai/internal/domain/policy"
+	policy "github.com/felixgeelhaar/acai/internal/infrastructure/policy"
 )
 
 // PolicyMiddleware wraps an MCP Server and enforces access control and redaction policies.

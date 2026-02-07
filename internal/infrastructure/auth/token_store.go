@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"time"
 
-	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/auth"
+	domain "github.com/felixgeelhaar/acai/internal/domain/auth"
 )
 
 // tokenFile is the stored credential format.

@@ -11,7 +11,7 @@ var (
 
 func NewRootCmd(deps *Dependencies) *cobra.Command {
 	root := &cobra.Command{
-		Use:   "granola-mcp",
+		Use:   "acai",
 		Short: "Granola meeting intelligence for the MCP ecosystem",
 		Long:  "A CLI and MCP server that exposes Granola meeting data as structured, queryable MCP resources.",
 		SilenceUsage: true,

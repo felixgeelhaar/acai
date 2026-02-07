@@ -1,0 +1,88 @@
+---
+import CodeBlock from './CodeBlock.astro';
+---
+
+<section class="bg-bg-secondary" id="policies">
+  <div class="max-w-5xl mx-auto px-6">
+    <div class="text-center mb-12">
+      <h2 class="text-3xl md:text-4xl font-bold text-text-primary mb-4">Agent Policies</h2>
+      <p class="text-text-secondary max-w-2xl mx-auto">
+        Fine-grained access control and content redaction.
+        Control what data AI agents can see and how sensitive content is handled.
+      </p>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-8">
+      <!-- YAML policy -->
+      <div>
+        <h3 class="text-lg font-semibold text-text-primary mb-4">Policy Configuration</h3>
+        <CodeBlock lang="yaml" title="policy.yaml">
+{`default_effect: allow
+rules:
+  - name: block-confidential-transcripts
+    effect: deny
+    tools: [get_transcript, export_embeddings]
+    conditions:
+      meeting_tags: [confidential]
+
+redaction:
+  enabled: true
+  rules:
+    - type: emails
+      replacement: "[EMAIL]"
+    - type: speakers
+      replacement: "Speaker {n}"
+    - type: keywords
+      keywords: [salary, confidential]
+      replacement: "[REDACTED]"
+    - type: patterns
+      pattern: '\\d{3}-\\d{2}-\\d{4}'
+      replacement: "[SSN]"`}
+        </CodeBlock>
+      </div>
+
+      <!-- Before/After -->
+      <div>
+        <h3 class="text-lg font-semibold text-text-primary mb-4">Redaction in Action</h3>
+
+        <!-- Before -->
+        <div class="mb-4">
+          <span class="inline-block text-xs font-semibold text-red mb-2 uppercase tracking-wider">Before</span>
+          <div class="rounded-lg border border-red/20 bg-bg-card p-4 font-mono text-sm">
+            <p class="text-text-secondary">
+              <span class="text-text-muted">"speaker":</span> <span class="text-orange">"Alice Johnson"</span>,
+            </p>
+            <p class="text-text-secondary">
+              <span class="text-text-muted">"text":</span> <span class="text-orange">"Send the salary report to alice@company.com and include SSN 123-45-6789"</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- After -->
+        <div>
+          <span class="inline-block text-xs font-semibold text-green mb-2 uppercase tracking-wider">After</span>
+          <div class="rounded-lg border border-green/20 bg-bg-card p-4 font-mono text-sm">
+            <p class="text-text-secondary">
+              <span class="text-text-muted">"speaker":</span> <span class="text-green">"Speaker 1"</span>,
+            </p>
+            <p class="text-text-secondary">
+              <span class="text-text-muted">"text":</span> <span class="text-green">"Send the [REDACTED] report to [EMAIL] and include SSN [SSN]"</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Policy features -->
+        <div class="mt-6 grid grid-cols-2 gap-3">
+          <div class="rounded-lg border border-border bg-bg-card p-3">
+            <h4 class="text-sm font-semibold text-orange mb-1">ACL</h4>
+            <p class="text-xs text-text-muted">First-match-wins rule evaluation. Deny tools for tagged meetings.</p>
+          </div>
+          <div class="rounded-lg border border-border bg-bg-card p-3">
+            <h4 class="text-sm font-semibold text-orange mb-1">Redaction</h4>
+            <p class="text-xs text-text-muted">Emails, speakers, keywords, and custom regex patterns.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	app "github.com/felixgeelhaar/granola-mcp/internal/application/annotation"
-	annotatn "github.com/felixgeelhaar/granola-mcp/internal/domain/annotation"
-	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
+	app "github.com/felixgeelhaar/acai/internal/application/annotation"
+	annotatn "github.com/felixgeelhaar/acai/internal/domain/annotation"
+	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
 )
 
 func TestAddNote_Success(t *testing.T) {

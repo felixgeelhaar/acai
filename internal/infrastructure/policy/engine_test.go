@@ -3,7 +3,7 @@ package policy
 import (
 	"testing"
 
-	domainpolicy "github.com/felixgeelhaar/granola-mcp/internal/domain/policy"
+	domainpolicy "github.com/felixgeelhaar/acai/internal/domain/policy"
 )
 
 func TestEngine_CheckAccess_Allowed(t *testing.T) {

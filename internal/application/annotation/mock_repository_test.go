@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	annotatn "github.com/felixgeelhaar/granola-mcp/internal/domain/annotation"
-	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
+	annotatn "github.com/felixgeelhaar/acai/internal/domain/annotation"
+	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
 )
 
 // mockNoteRepository implements annotation.NoteRepository for tests.

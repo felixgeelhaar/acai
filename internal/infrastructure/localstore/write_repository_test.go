@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
-	"github.com/felixgeelhaar/granola-mcp/internal/infrastructure/localstore"
+	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
+	"github.com/felixgeelhaar/acai/internal/infrastructure/localstore"
 )
 
 func setupWriteRepo(t *testing.T) *localstore.WriteRepository {

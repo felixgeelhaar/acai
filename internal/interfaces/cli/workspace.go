@@ -3,7 +3,7 @@ package cli
 import (
 	"fmt"
 
-	workspaceapp "github.com/felixgeelhaar/granola-mcp/internal/application/workspace"
+	workspaceapp "github.com/felixgeelhaar/acai/internal/application/workspace"
 	"github.com/spf13/cobra"
 )
 

@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/granola-mcp/internal/infrastructure/localstore"
-	"github.com/felixgeelhaar/granola-mcp/internal/infrastructure/outbox"
+	"github.com/felixgeelhaar/acai/internal/infrastructure/localstore"
+	"github.com/felixgeelhaar/acai/internal/infrastructure/outbox"
 	_ "github.com/mattn/go-sqlite3"
 )
 

@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	domainpolicy "github.com/felixgeelhaar/granola-mcp/internal/domain/policy"
+	domainpolicy "github.com/felixgeelhaar/acai/internal/domain/policy"
 )
 
 var emailRegex = regexp.MustCompile(`[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}`)

@@ -4,16 +4,16 @@
 
 ### 1. Overview
 
-This document describes the technical design for `granola-mcp`, a Go CLI and MCP server that exposes Granola meeting intelligence as MCP resources and tools. The system follows a strict Domain-Driven Design (DDD) architecture, leveraging `felixgeelhaar/mcp-go` for the MCP protocol layer, `felixgeelhaar/fortify` for resilience, and `felixgeelhaar/bolt` for structured logging.
+This document describes the technical design for `acai`, a Go CLI and MCP server that exposes Granola meeting intelligence as MCP resources and tools. The system follows a strict Domain-Driven Design (DDD) architecture, leveraging `felixgeelhaar/mcp-go` for the MCP protocol layer, `felixgeelhaar/fortify` for resilience, and `felixgeelhaar/bolt` for structured logging.
 
 ### 2. Architecture
 
 #### 2.1 DDD Layer Structure
 
 ```
-granola-mcp/
+acai/
 ├── cmd/
-│   └── granola-mcp/
+│   └── acai/
 │       └── main.go                    # Entry point, wires everything together
 ├── internal/
 │   ├── domain/                        # Domain Layer (pure business logic, zero dependencies)
@@ -313,7 +313,7 @@ package meeting
 import (
     "context"
 
-    domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
+    domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
 )
 
 // ListMeetingsInput defines the input for the ListMeetings use case.
@@ -396,7 +396,7 @@ import (
     "context"
     "net/http"
 
-    domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
+    domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
     "github.com/felixgeelhaar/bolt/v3"
 )
 
@@ -493,7 +493,7 @@ import (
     "database/sql"
     "time"
 
-    domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
+    domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
 )
 
 // CachedRepository decorates a domain.Repository with local SQLite caching.
@@ -523,7 +523,7 @@ package auth
 import (
     "context"
 
-    domain "github.com/felixgeelhaar/granola-mcp/internal/domain/auth"
+    domain "github.com/felixgeelhaar/acai/internal/domain/auth"
 )
 
 // OAuthService implements domain.AuthService using WorkOS OAuth.
@@ -554,7 +554,7 @@ import (
     "context"
 
     mcpfw "github.com/felixgeelhaar/mcp-go"
-    meetingapp "github.com/felixgeelhaar/granola-mcp/internal/application/meeting"
+    meetingapp "github.com/felixgeelhaar/acai/internal/application/meeting"
 )
 
 func NewServer(
@@ -565,7 +565,7 @@ func NewServer(
     getActionItems *meetingapp.GetActionItems,
 ) *mcpfw.Server {
     srv := mcpfw.NewServer(mcpfw.ServerInfo{
-        Name:    "granola-mcp",
+        Name:    "acai",
         Version: "0.1.0",
     })
 
@@ -664,7 +664,7 @@ func applyMiddleware(srv *mcpfw.Server, logger *bolt.Logger) {
 Built with `cobra`. Each command maps to an application use case.
 
 ```
-granola-mcp
+acai
 ├── auth
 │   ├── login       → Login use case
 │   └── status      → CheckStatus use case
@@ -685,7 +685,7 @@ import "github.com/spf13/cobra"
 
 func NewRootCmd(deps *Dependencies) *cobra.Command {
     root := &cobra.Command{
-        Use:   "granola-mcp",
+        Use:   "acai",
         Short: "Granola meeting intelligence for the MCP ecosystem",
     }
 
@@ -705,14 +705,14 @@ func NewRootCmd(deps *Dependencies) *cobra.Command {
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--config` | string | `~/.granola-mcp.yaml` | Config file path |
+| `--config` | string | `~/.acai.yaml` | Config file path |
 | `--format` | string | `table` | Output format: `table`, `json`, `md` |
 | `--verbose` | bool | `false` | Enable debug logging |
 | `--no-color` | bool | `false` | Disable colored output |
 
 ### 7. Dependency Injection (Composition Root)
 
-All dependencies are wired in `cmd/granola-mcp/main.go`. No service locator, no global state.
+All dependencies are wired in `cmd/acai/main.go`. No service locator, no global state.
 
 ```go
 package main
@@ -724,14 +724,14 @@ import (
     "time"
 
     "github.com/felixgeelhaar/bolt/v3"
-    meetingapp "github.com/felixgeelhaar/granola-mcp/internal/application/meeting"
-    authapp "github.com/felixgeelhaar/granola-mcp/internal/application/auth"
-    "github.com/felixgeelhaar/granola-mcp/internal/infrastructure/cache"
-    "github.com/felixgeelhaar/granola-mcp/internal/infrastructure/granola"
-    infraauth "github.com/felixgeelhaar/granola-mcp/internal/infrastructure/auth"
-    "github.com/felixgeelhaar/granola-mcp/internal/infrastructure/resilience"
-    "github.com/felixgeelhaar/granola-mcp/internal/interfaces/cli"
-    mcpiface "github.com/felixgeelhaar/granola-mcp/internal/interfaces/mcp"
+    meetingapp "github.com/felixgeelhaar/acai/internal/application/meeting"
+    authapp "github.com/felixgeelhaar/acai/internal/application/auth"
+    "github.com/felixgeelhaar/acai/internal/infrastructure/cache"
+    "github.com/felixgeelhaar/acai/internal/infrastructure/granola"
+    infraauth "github.com/felixgeelhaar/acai/internal/infrastructure/auth"
+    "github.com/felixgeelhaar/acai/internal/infrastructure/resilience"
+    "github.com/felixgeelhaar/acai/internal/interfaces/cli"
+    mcpiface "github.com/felixgeelhaar/acai/internal/interfaces/mcp"
 )
 
 func main() {
@@ -792,7 +792,7 @@ func main() {
 
 #### 8.1 Configuration File
 
-`~/.granola-mcp.yaml`:
+`~/.acai.yaml`:
 
 ```yaml
 # Granola API
@@ -803,7 +803,7 @@ granola:
 
 # MCP Server
 mcp:
-  server_name: "granola-mcp"
+  server_name: "acai"
   transport: "stdio"    # "stdio" or "http"
   http_port: 8080       # Only if transport is "http"
   enabled_resources:
@@ -816,7 +816,7 @@ mcp:
 # Cache
 cache:
   enabled: true
-  dir: "~/.granola-mcp/cache"
+  dir: "~/.acai/cache"
   ttl: "15m"
 
 # Resilience
@@ -854,15 +854,15 @@ logging:
 
 #### 8.2 Environment Variable Overrides
 
-All config values can be overridden via environment variables with `GRANOLA_MCP_` prefix:
+All config values can be overridden via environment variables with `ACAI_` prefix:
 
 ```
-GRANOLA_MCP_GRANOLA_API_URL=https://api.granola.ai
-GRANOLA_MCP_GRANOLA_API_TOKEN=gra_xxxxx
-GRANOLA_MCP_MCP_TRANSPORT=http
-GRANOLA_MCP_MCP_HTTP_PORT=9090
-GRANOLA_MCP_CACHE_TTL=30m
-GRANOLA_MCP_LOGGING_LEVEL=debug
+ACAI_GRANOLA_API_URL=https://api.granola.ai
+ACAI_GRANOLA_API_TOKEN=gra_xxxxx
+ACAI_MCP_TRANSPORT=http
+ACAI_MCP_HTTP_PORT=9090
+ACAI_CACHE_TTL=30m
+ACAI_LOGGING_LEVEL=debug
 ```
 
 ### 9. Distribution
@@ -874,11 +874,11 @@ The project uses GoReleaser to build cross-platform binaries and publish a Homeb
 **`goreleaser.yaml`:**
 
 ```yaml
-project_name: granola-mcp
+project_name: acai
 
 builds:
-  - main: ./cmd/granola-mcp
-    binary: granola-mcp
+  - main: ./cmd/acai
+    binary: acai
     env:
       - CGO_ENABLED=1
     goos:
@@ -898,17 +898,17 @@ archives:
     name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
 
 brews:
-  - name: granola-mcp
+  - name: acai
     repository:
       owner: felixgeelhaar
       name: homebrew-tap
-    homepage: "https://github.com/felixgeelhaar/granola-mcp"
+    homepage: "https://github.com/felixgeelhaar/acai"
     description: "Granola meeting intelligence for the MCP ecosystem"
     license: "MIT"
     install: |
-      bin.install "granola-mcp"
+      bin.install "acai"
     test: |
-      system "#{bin}/granola-mcp", "--version"
+      system "#{bin}/acai", "--version"
 
 checksum:
   name_template: "checksums.txt"
@@ -927,13 +927,13 @@ changelog:
 ```bash
 # Homebrew
 brew tap felixgeelhaar/tap
-brew install granola-mcp
+brew install acai
 
 # Go install
-go install github.com/felixgeelhaar/granola-mcp/cmd/granola-mcp@latest
+go install github.com/felixgeelhaar/acai/cmd/acai@latest
 
 # Binary (GitHub Releases)
-# Download from https://github.com/felixgeelhaar/granola-mcp/releases
+# Download from https://github.com/felixgeelhaar/acai/releases
 ```
 
 #### 9.2 Build & Release
@@ -944,7 +944,7 @@ VERSION ?= $(shell git describe --tags --always --dirty)
 .PHONY: build test lint release
 
 build:
-	go build -ldflags "-X main.version=$(VERSION)" -o bin/granola-mcp ./cmd/granola-mcp
+	go build -ldflags "-X main.version=$(VERSION)" -o bin/acai ./cmd/acai
 
 test:
 	go test -race -coverprofile=coverage.out ./...

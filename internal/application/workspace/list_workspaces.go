@@ -4,7 +4,7 @@ package workspace
 import (
 	"context"
 
-	"github.com/felixgeelhaar/granola-mcp/internal/domain/workspace"
+	"github.com/felixgeelhaar/acai/internal/domain/workspace"
 )
 
 type ListWorkspacesInput struct{}

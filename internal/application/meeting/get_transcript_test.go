@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	app "github.com/felixgeelhaar/granola-mcp/internal/application/meeting"
-	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
+	app "github.com/felixgeelhaar/acai/internal/application/meeting"
+	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
 )
 
 func TestGetTranscript_Found(t *testing.T) {

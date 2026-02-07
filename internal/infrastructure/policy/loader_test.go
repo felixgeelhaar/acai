@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	domainpolicy "github.com/felixgeelhaar/granola-mcp/internal/domain/policy"
+	domainpolicy "github.com/felixgeelhaar/acai/internal/domain/policy"
 )
 
 func TestLoadFromBytes_ValidYAML(t *testing.T) {

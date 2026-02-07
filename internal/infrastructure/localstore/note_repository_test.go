@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/felixgeelhaar/granola-mcp/internal/domain/annotation"
-	"github.com/felixgeelhaar/granola-mcp/internal/infrastructure/localstore"
+	"github.com/felixgeelhaar/acai/internal/domain/annotation"
+	"github.com/felixgeelhaar/acai/internal/infrastructure/localstore"
 )
 
 func setupNoteRepo(t *testing.T) *localstore.NoteRepository {

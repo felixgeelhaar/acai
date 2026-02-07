@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	app "github.com/felixgeelhaar/granola-mcp/internal/application/auth"
-	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/auth"
+	app "github.com/felixgeelhaar/acai/internal/application/auth"
+	domain "github.com/felixgeelhaar/acai/internal/domain/auth"
 )
 
 type mockAuthService struct {

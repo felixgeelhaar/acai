@@ -3,8 +3,8 @@ package cli
 import (
 	"fmt"
 
-	authapp "github.com/felixgeelhaar/granola-mcp/internal/application/auth"
-	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/auth"
+	authapp "github.com/felixgeelhaar/acai/internal/application/auth"
+	domain "github.com/felixgeelhaar/acai/internal/domain/auth"
 	"github.com/spf13/cobra"
 )
 
@@ -60,7 +60,7 @@ func newAuthStatusCmd(deps *Dependencies) *cobra.Command {
 			}
 
 			if !out.Authenticated {
-				_, _ = fmt.Fprintln(deps.Out, "Not authenticated. Run 'granola-mcp auth login' to authenticate.")
+				_, _ = fmt.Fprintln(deps.Out, "Not authenticated. Run 'acai auth login' to authenticate.")
 				return nil
 			}
 

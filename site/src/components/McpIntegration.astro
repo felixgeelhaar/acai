@@ -1,0 +1,108 @@
+---
+import CodeBlock from './CodeBlock.astro';
+
+const tools = [
+  { name: 'list_meetings', desc: 'Search and filter meetings with date, source, and text filters' },
+  { name: 'get_meeting', desc: 'Full meeting details including summary and action items' },
+  { name: 'get_transcript', desc: 'Speaker-attributed transcript with timestamps' },
+  { name: 'search_transcripts', desc: 'Full-text search across all meeting transcripts' },
+  { name: 'get_action_items', desc: 'Action items from a specific meeting' },
+  { name: 'meeting_stats', desc: 'Aggregated statistics with interactive D3.js dashboard' },
+  { name: 'list_workspaces', desc: 'List all Granola workspaces' },
+  { name: 'add_note', desc: 'Attach an agent note to a meeting' },
+  { name: 'list_notes', desc: 'List agent notes for a meeting' },
+  { name: 'delete_note', desc: 'Remove an agent note' },
+  { name: 'complete_action_item', desc: 'Mark an action item as completed' },
+  { name: 'update_action_item', desc: 'Update an action item\'s text' },
+  { name: 'export_embeddings', desc: 'Export meeting content as chunks for embedding pipelines' },
+];
+
+const resources = [
+  { uri: 'meeting://{id}', desc: 'Full meeting details as JSON' },
+  { uri: 'transcript://{meeting_id}', desc: 'Transcript utterances as JSON' },
+  { uri: 'note://{meeting_id}', desc: 'Agent notes as JSON' },
+  { uri: 'workspace://{id}', desc: 'Workspace details as JSON' },
+  { uri: 'ui://meeting-stats', desc: 'Interactive D3.js dashboard (HTML)' },
+];
+---
+
+<section id="mcp">
+  <div class="max-w-5xl mx-auto px-6">
+    <div class="text-center mb-12">
+      <h2 class="text-3xl md:text-4xl font-bold text-text-primary mb-4">MCP Integration</h2>
+      <p class="text-text-secondary max-w-2xl mx-auto">
+        Drop this into your Claude Code config and your AI agent instantly gains meeting intelligence.
+      </p>
+    </div>
+
+    <!-- Config block -->
+    <div class="max-w-2xl mx-auto mb-12">
+      <CodeBlock lang="json" title="~/.claude/mcp.json">
+{`{
+  "mcpServers": {
+    "granola": {
+      "command": "acai",
+      "args": ["serve"],
+      "env": {
+        "ACAI_GRANOLA_API_TOKEN": "gra_xxxxx"
+      }
+    }
+  }
+}`}
+      </CodeBlock>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-8">
+      <!-- Tools -->
+      <div>
+        <h3 class="text-xl font-semibold text-text-primary mb-4 flex items-center gap-2">
+          <span class="text-accent">13</span> Tools
+        </h3>
+        <div class="rounded-lg border border-border bg-bg-card overflow-hidden">
+          <table class="w-full text-sm">
+            <tbody>
+              {tools.map((tool, i) => (
+                <tr class={i % 2 === 0 ? 'bg-bg-card' : 'bg-bg-secondary/50'}>
+                  <td class="px-4 py-2 font-mono text-accent whitespace-nowrap">{tool.name}</td>
+                  <td class="px-4 py-2 text-text-secondary">{tool.desc}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Resources -->
+      <div>
+        <h3 class="text-xl font-semibold text-text-primary mb-4 flex items-center gap-2">
+          <span class="text-accent-secondary">5</span> Resources
+        </h3>
+        <div class="rounded-lg border border-border bg-bg-card overflow-hidden">
+          <table class="w-full text-sm">
+            <tbody>
+              {resources.map((res, i) => (
+                <tr class={i % 2 === 0 ? 'bg-bg-card' : 'bg-bg-secondary/50'}>
+                  <td class="px-4 py-2 font-mono text-accent-secondary whitespace-nowrap">{res.uri}</td>
+                  <td class="px-4 py-2 text-text-secondary">{res.desc}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Real-time events -->
+        <div class="mt-6 rounded-lg border border-border bg-bg-card p-4">
+          <h4 class="text-sm font-semibold text-green mb-2 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-green animate-pulse"></span>
+            Real-time Events
+          </h4>
+          <p class="text-xs text-text-secondary">
+            Domain events (<code class="text-cyan">MeetingCreated</code>, <code class="text-cyan">TranscriptUpdated</code>,
+            <code class="text-cyan">NoteAdded</code>) are dispatched to connected MCP sessions.
+            Agents react to meeting updates as they happen.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

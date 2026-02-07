@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"text/tabwriter"
 
-	annotationapp "github.com/felixgeelhaar/granola-mcp/internal/application/annotation"
+	annotationapp "github.com/felixgeelhaar/acai/internal/application/annotation"
 	"github.com/spf13/cobra"
 )
 

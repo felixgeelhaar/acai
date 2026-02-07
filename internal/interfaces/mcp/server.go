@@ -12,13 +12,13 @@ import (
 
 	mcpfw "github.com/felixgeelhaar/mcp-go"
 
-	annotationapp "github.com/felixgeelhaar/granola-mcp/internal/application/annotation"
-	embeddingapp "github.com/felixgeelhaar/granola-mcp/internal/application/embedding"
-	meetingapp "github.com/felixgeelhaar/granola-mcp/internal/application/meeting"
-	workspaceapp "github.com/felixgeelhaar/granola-mcp/internal/application/workspace"
-	"github.com/felixgeelhaar/granola-mcp/internal/domain/annotation"
-	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
-	"github.com/felixgeelhaar/granola-mcp/internal/domain/workspace"
+	annotationapp "github.com/felixgeelhaar/acai/internal/application/annotation"
+	embeddingapp "github.com/felixgeelhaar/acai/internal/application/embedding"
+	meetingapp "github.com/felixgeelhaar/acai/internal/application/meeting"
+	workspaceapp "github.com/felixgeelhaar/acai/internal/application/workspace"
+	"github.com/felixgeelhaar/acai/internal/domain/annotation"
+	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
+	"github.com/felixgeelhaar/acai/internal/domain/workspace"
 )
 
 // ServerOptions groups all use cases passed to NewServer.

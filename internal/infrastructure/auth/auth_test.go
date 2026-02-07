@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/auth"
-	infraauth "github.com/felixgeelhaar/granola-mcp/internal/infrastructure/auth"
+	domain "github.com/felixgeelhaar/acai/internal/domain/auth"
+	infraauth "github.com/felixgeelhaar/acai/internal/infrastructure/auth"
 )
 
 func TestFileTokenStore_SaveAndLoad(t *testing.T) {

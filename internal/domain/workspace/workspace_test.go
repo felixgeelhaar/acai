@@ -3,7 +3,7 @@ package workspace_test
 import (
 	"testing"
 
-	"github.com/felixgeelhaar/granola-mcp/internal/domain/workspace"
+	"github.com/felixgeelhaar/acai/internal/domain/workspace"
 )
 
 func TestNew_Valid(t *testing.T) {

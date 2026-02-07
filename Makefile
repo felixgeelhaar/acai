@@ -6,7 +6,7 @@ LDFLAGS := -s -w -X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.dat
 .PHONY: build test test-race lint clean release
 
 build:
-	CGO_ENABLED=1 go build -ldflags "$(LDFLAGS)" -o bin/granola-mcp ./cmd/granola-mcp
+	CGO_ENABLED=1 go build -ldflags "$(LDFLAGS)" -o bin/acai ./cmd/acai
 
 test:
 	CGO_ENABLED=1 go test ./... -count=1

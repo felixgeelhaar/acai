@@ -3,7 +3,7 @@ package annotation
 import (
 	"context"
 
-	annotatn "github.com/felixgeelhaar/granola-mcp/internal/domain/annotation"
+	annotatn "github.com/felixgeelhaar/acai/internal/domain/annotation"
 )
 
 type ListNotesInput struct {

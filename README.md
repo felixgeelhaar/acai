@@ -1,9 +1,15 @@
-# granola-mcp
+# acai
+
+<p align="center">
+  <img src="site/public/favicon.svg" alt="acai" width="80" height="80" />
+</p>
 
 ![Coverage](coverage-badge.svg)
-[![Go Report Card](https://goreportcard.com/badge/github.com/felixgeelhaar/granola-mcp)](https://goreportcard.com/report/github.com/felixgeelhaar/granola-mcp)
+[![Go Report Card](https://goreportcard.com/badge/github.com/felixgeelhaar/acai)](https://goreportcard.com/report/github.com/felixgeelhaar/acai)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Release](https://img.shields.io/github/v/release/felixgeelhaar/granola-mcp)](https://github.com/felixgeelhaar/granola-mcp/releases)
+[![Release](https://img.shields.io/github/v/release/felixgeelhaar/acai)](https://github.com/felixgeelhaar/acai/releases)
+
+**[Website](https://felixgeelhaar.github.io/acai/)** | **[Getting Started](#quick-start)** | **[Documentation](#mcp-server)**
 
 Granola meeting intelligence for the MCP ecosystem. A Go CLI and MCP server that exposes [Granola](https://granola.ai) meetings, transcripts, summaries, and action items as structured MCP resources and tools — enabling AI agents to reason over meeting knowledge.
 
@@ -26,13 +32,13 @@ Granola meeting intelligence for the MCP ecosystem. A Go CLI and MCP server that
 
 ```bash
 brew tap felixgeelhaar/tap
-brew install granola-mcp
+brew install acai
 ```
 
 ### Go install
 
 ```bash
-CGO_ENABLED=1 go install github.com/felixgeelhaar/granola-mcp/cmd/granola-mcp@latest
+CGO_ENABLED=1 go install github.com/felixgeelhaar/acai/cmd/acai@latest
 ```
 
 > CGO is required for the SQLite driver.
@@ -40,8 +46,8 @@ CGO_ENABLED=1 go install github.com/felixgeelhaar/granola-mcp/cmd/granola-mcp@la
 ### From source
 
 ```bash
-git clone https://github.com/felixgeelhaar/granola-mcp.git
-cd granola-mcp
+git clone https://github.com/felixgeelhaar/acai.git
+cd acai
 make build
 ```
 
@@ -49,29 +55,29 @@ make build
 
 ```bash
 # Authenticate with Granola
-export GRANOLA_MCP_GRANOLA_API_TOKEN=gra_xxxxx
-granola-mcp auth login --method api_token
+export ACAI_GRANOLA_API_TOKEN=gra_xxxxx
+acai auth login --method api_token
 
 # List recent meetings
-granola-mcp list meetings
+acai list meetings
 
 # Export a meeting as markdown
-granola-mcp export meeting <meeting-id> --format md
+acai export meeting <meeting-id> --format md
 
 # Add an agent note to a meeting
-granola-mcp note add <meeting-id> "Key insight from analysis"
+acai note add <meeting-id> "Key insight from analysis"
 
 # Export meeting chunks for embedding
-granola-mcp export embeddings --meetings <id1>,<id2> --strategy speaker_turn
+acai export embeddings --meetings <id1>,<id2> --strategy speaker_turn
 
 # Start as MCP server (stdio, for Claude Code)
-granola-mcp serve
+acai serve
 ```
 
 ## CLI Commands
 
 ```
-granola-mcp
+acai
   auth
     login         Authenticate with Granola (--method oauth|api_token)
     status        Show current authentication status
@@ -94,7 +100,7 @@ granola-mcp
 
 ## MCP Server
 
-When running as an MCP server (`granola-mcp serve`), the following tools and resources are exposed:
+When running as an MCP server (`acai serve`), the following tools and resources are exposed:
 
 ### Tools
 
@@ -132,10 +138,10 @@ Add to your Claude Code MCP configuration (`~/.claude/mcp.json`):
 {
   "mcpServers": {
     "granola": {
-      "command": "granola-mcp",
+      "command": "acai",
       "args": ["serve"],
       "env": {
-        "GRANOLA_MCP_GRANOLA_API_TOKEN": "gra_xxxxx"
+        "ACAI_GRANOLA_API_TOKEN": "gra_xxxxx"
       }
     }
   }
@@ -144,7 +150,7 @@ Add to your Claude Code MCP configuration (`~/.claude/mcp.json`):
 
 ## Agent Policies
 
-Control what data AI agents can access and how sensitive content is handled. Create a YAML policy file and set the `GRANOLA_MCP_POLICY_FILE` environment variable:
+Control what data AI agents can access and how sensitive content is handled. Create a YAML policy file and set the `ACAI_POLICY_FILE` environment variable:
 
 ```yaml
 default_effect: allow
@@ -180,22 +186,22 @@ Configuration uses 12-factor principles: sensible defaults with environment vari
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `GRANOLA_MCP_GRANOLA_API_URL` | `https://api.granola.ai` | Granola API base URL |
-| `GRANOLA_MCP_GRANOLA_API_TOKEN` | — | API token for authentication |
-| `GRANOLA_MCP_MCP_TRANSPORT` | `stdio` | MCP transport (`stdio` or `http`) |
-| `GRANOLA_MCP_MCP_HTTP_PORT` | `8080` | HTTP port when using HTTP transport |
-| `GRANOLA_MCP_CACHE_TTL` | `15m` | Local cache time-to-live |
-| `GRANOLA_MCP_LOGGING_LEVEL` | `info` | Log level (`debug`, `info`, `warn`, `error`) |
-| `GRANOLA_MCP_LOGGING_FORMAT` | `console` | Log format (`console` or `json`) |
-| `GRANOLA_MCP_WEBHOOK_SECRET` | — | HMAC secret for webhook signature validation |
-| `GRANOLA_MCP_POLICY_FILE` | — | Path to YAML policy file (enables ACL + redaction) |
+| `ACAI_GRANOLA_API_URL` | `https://api.granola.ai` | Granola API base URL |
+| `ACAI_GRANOLA_API_TOKEN` | — | API token for authentication |
+| `ACAI_MCP_TRANSPORT` | `stdio` | MCP transport (`stdio` or `http`) |
+| `ACAI_MCP_HTTP_PORT` | `8080` | HTTP port when using HTTP transport |
+| `ACAI_CACHE_TTL` | `15m` | Local cache time-to-live |
+| `ACAI_LOGGING_LEVEL` | `info` | Log level (`debug`, `info`, `warn`, `error`) |
+| `ACAI_LOGGING_FORMAT` | `console` | Log format (`console` or `json`) |
+| `ACAI_WEBHOOK_SECRET` | — | HMAC secret for webhook signature validation |
+| `ACAI_POLICY_FILE` | — | Path to YAML policy file (enables ACL + redaction) |
 
 ## Architecture
 
 The project follows strict Domain-Driven Design with hexagonal architecture:
 
 ```
-cmd/granola-mcp/main.go              Composition root (DI wiring)
+cmd/acai/main.go                     Composition root (DI wiring)
 
 internal/
   domain/                             Pure business logic, zero dependencies
@@ -277,6 +283,20 @@ make clean
 | Application (meeting, annotation, embedding, auth, workspace) | 86-100% |
 | Infrastructure (granola, resilience, cache, policy, localstore, outbox) | 85-97% |
 | Interfaces (mcp, cli) | 74-81% |
+
+## Website
+
+The project website at [felixgeelhaar.github.io/acai](https://felixgeelhaar.github.io/acai/) is built with Astro, Vue, and Tailwind CSS v4. Source lives in the `site/` directory.
+
+```bash
+# Development
+cd site && npm install && npm run dev
+
+# Production build
+npm run build && npm run preview
+```
+
+Deployed automatically to GitHub Pages via `.github/workflows/pages.yml` on push to `main`.
 
 ## License
 

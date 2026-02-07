@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/auth"
+	domain "github.com/felixgeelhaar/acai/internal/domain/auth"
 )
 
 // TokenStore abstracts token persistence.

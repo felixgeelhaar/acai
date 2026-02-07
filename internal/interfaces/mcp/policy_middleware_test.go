@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	domainpolicy "github.com/felixgeelhaar/granola-mcp/internal/domain/policy"
-	policy "github.com/felixgeelhaar/granola-mcp/internal/infrastructure/policy"
-	mcpiface "github.com/felixgeelhaar/granola-mcp/internal/interfaces/mcp"
+	domainpolicy "github.com/felixgeelhaar/acai/internal/domain/policy"
+	policy "github.com/felixgeelhaar/acai/internal/infrastructure/policy"
+	mcpiface "github.com/felixgeelhaar/acai/internal/interfaces/mcp"
 )
 
 func TestPolicyMiddleware_AllowedTool(t *testing.T) {

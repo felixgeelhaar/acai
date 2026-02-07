@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/granola-mcp/internal/domain/auth"
+	"github.com/felixgeelhaar/acai/internal/domain/auth"
 )
 
 func TestToken_IsExpired(t *testing.T) {

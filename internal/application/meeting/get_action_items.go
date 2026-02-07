@@ -3,7 +3,7 @@ package meeting
 import (
 	"context"
 
-	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
+	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
 )
 
 type GetActionItemsInput struct {

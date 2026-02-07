@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	domain "github.com/felixgeelhaar/granola-mcp/internal/domain/meeting"
+	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
 )
 
 var ErrEmptyQuery = errors.New("search query must not be empty")

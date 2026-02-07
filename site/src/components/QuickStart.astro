@@ -1,0 +1,71 @@
+---
+import TerminalWindow from './TerminalWindow.astro';
+---
+
+<section class="bg-bg-secondary" id="quickstart">
+  <div class="max-w-5xl mx-auto px-6">
+    <div class="text-center mb-12">
+      <h2 class="text-3xl md:text-4xl font-bold text-text-primary mb-4">Quick Start</h2>
+      <p class="text-text-secondary max-w-2xl mx-auto">
+        Up and running in under a minute.
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-8">
+      <!-- Step 1: Install -->
+      <div>
+        <div class="flex items-center gap-3 mb-4">
+          <span class="flex items-center justify-center w-8 h-8 rounded-full bg-accent/10 text-accent font-bold text-sm border border-accent/20">1</span>
+          <h3 class="text-lg font-semibold text-text-primary">Install</h3>
+        </div>
+        <TerminalWindow title="install">
+          <div>
+            <span class="text-green">$</span>
+            <span class="text-text-secondary"> brew tap felixgeelhaar/tap</span>
+          </div>
+          <div>
+            <span class="text-green">$</span>
+            <span class="text-text-secondary"> brew install acai</span>
+          </div>
+        </TerminalWindow>
+      </div>
+
+      <!-- Step 2: Configure -->
+      <div>
+        <div class="flex items-center gap-3 mb-4">
+          <span class="flex items-center justify-center w-8 h-8 rounded-full bg-accent-secondary/10 text-accent-secondary font-bold text-sm border border-accent-secondary/20">2</span>
+          <h3 class="text-lg font-semibold text-text-primary">Configure</h3>
+        </div>
+        <TerminalWindow title="auth">
+          <div>
+            <span class="text-green">$</span>
+            <span class="text-text-secondary"> export ACAI_GRANOLA_API_TOKEN=gra_xxxxx</span>
+          </div>
+          <div>
+            <span class="text-green">$</span>
+            <span class="text-text-secondary"> acai auth login --method api_token</span>
+          </div>
+        </TerminalWindow>
+      </div>
+
+      <!-- Step 3: Use -->
+      <div>
+        <div class="flex items-center gap-3 mb-4">
+          <span class="flex items-center justify-center w-8 h-8 rounded-full bg-green/10 text-green font-bold text-sm border border-green/20">3</span>
+          <h3 class="text-lg font-semibold text-text-primary">Use</h3>
+        </div>
+        <TerminalWindow title="use">
+          <div>
+            <span class="text-green">$</span>
+            <span class="text-text-secondary"> acai list meetings</span>
+          </div>
+          <div class="mt-1">
+            <span class="text-green">$</span>
+            <span class="text-text-secondary"> acai serve</span>
+          </div>
+          <div class="text-text-muted mt-1"># MCP server running on stdio</div>
+        </TerminalWindow>
+      </div>
+    </div>
+  </div>
+</section>
