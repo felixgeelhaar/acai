@@ -1,0 +1,160 @@
+{
+  "id": "run-165158a20015e2bf",
+  "plan_hash": "dbae9a5434af0645df69bae22030e89bab1d5f255f91af7e4a28dda0d4d40e44",
+  "repo_id": "git@github.com:felixgeelhaar/granola-mcp.git",
+  "repo_root": "/Users/felixgeelhaar/Developer/projects/open_source/granola-mcp",
+  "base_ref": "v0.0.0",
+  "head_sha": "acc9456d00705e1e4a3b0682b2561e2c2c28fa4d",
+  "commits": [
+    "acc9456d00705e1e4a3b0682b2561e2c2c28fa4d",
+    "2bc60efa9432c98c9b2b407e0fdb9f5928109bad",
+    "e53b7e5adef36110ab38bf05a7ef1d08c8f63646"
+  ],
+  "config_hash": "",
+  "plugin_plan_hash": "",
+  "version_current": "0.0.0",
+  "version_next": "1.0.0",
+  "bump_kind": "minor",
+  "confidence": 0,
+  "risk_score": 0,
+  "reasons": null,
+  "actor_type": "user",
+  "actor_id": "cli",
+  "thresholds": {
+    "auto_approve_risk_threshold": 0,
+    "require_approval_above": 0,
+    "block_release_above": 0
+  },
+  "tag_name": "v1.0.0",
+  "notes": {
+    "text": "- chore: add GoReleaser and Relicta release configuration\n- feat: add write-back, embedding export, and agent policies (Phase 3)\n- feat: add event streaming, webhook adapter, and multi-workspace support\n",
+    "audience_preset": "",
+    "tone_preset": "",
+    "provider": "basic",
+    "model": "",
+    "generated_at": "2026-02-07T00:57:45.307019+01:00"
+  },
+  "approval": {
+    "approved_by": "felixgeelhaar",
+    "approved_at": "2026-02-07T00:58:47.313257+01:00",
+    "auto_approved": true,
+    "plan_hash": "dbae9a5434af0645df69bae22030e89bab1d5f255f91af7e4a28dda0d4d40e44",
+    "risk_score": 0,
+    "approver_type": "user"
+  },
+  "steps": [
+    {
+      "name": "create-tag",
+      "type": "tag",
+      "config_hash": "",
+      "idempotency_key": ""
+    }
+  ],
+  "step_status": {
+    "create-tag": {
+      "state": "done",
+      "attempts": 1,
+      "started_at": "2026-02-07T00:58:57.53957+01:00",
+      "completed_at": "2026-02-07T00:58:58.596724+01:00",
+      "output": "Created and pushed tag v1.0.0"
+    }
+  },
+  "state": "published",
+  "history": [
+    {
+      "at": "2026-02-07T00:57:36.880572+01:00",
+      "from": "draft",
+      "to": "planned",
+      "event": "PLAN",
+      "actor": "cli",
+      "reason": "Release planned"
+    },
+    {
+      "at": "2026-02-07T00:57:42.166842+01:00",
+      "from": "planned",
+      "to": "versioned",
+      "event": "BUMP",
+      "actor": "cli",
+      "reason": "Version applied",
+      "metadata": {
+        "tag_name": "v1.0.0",
+        "version": "1.0.0"
+      }
+    },
+    {
+      "at": "2026-02-07T00:57:45.307028+01:00",
+      "from": "versioned",
+      "to": "notes_ready",
+      "event": "GENERATE_NOTES",
+      "actor": "cli",
+      "reason": "Notes generated"
+    },
+    {
+      "at": "2026-02-07T00:58:47.313266+01:00",
+      "from": "notes_ready",
+      "to": "approved",
+      "event": "APPROVE",
+      "actor": "felixgeelhaar",
+      "reason": "Release approved",
+      "metadata": {
+        "auto_approved": "true",
+        "plan_hash": "dbae9a5434af0645df69bae22030e89bab1d5f255f91af7e4a28dda0d4d40e44",
+        "risk_score": "0.00"
+      }
+    },
+    {
+      "at": "2026-02-07T00:58:57.538899+01:00",
+      "from": "approved",
+      "to": "publishing",
+      "event": "START_PUBLISH",
+      "actor": "cli",
+      "reason": "Publishing started"
+    },
+    {
+      "at": "2026-02-07T00:58:58.597836+01:00",
+      "from": "publishing",
+      "to": "published",
+      "event": "PUBLISH_COMPLETE",
+      "actor": "cli",
+      "reason": "Release published"
+    }
+  ],
+  "changeset_id": "cs-1770422256840162000",
+  "changeset": {
+    "id": "cs-1770422256840162000",
+    "from_ref": "v0.0.0",
+    "to_ref": "HEAD",
+    "commits": [
+      {
+        "hash": "acc9456d00705e1e4a3b0682b2561e2c2c28fa4d",
+        "type": "chore",
+        "subject": "chore: add GoReleaser and Relicta release configuration",
+        "author": "Felix Geelhaar",
+        "author_email": "felix@felixgeelhaar.de",
+        "date": "2026-02-07T00:51:51+01:00",
+        "raw_message": "chore: add GoReleaser and Relicta release configuration\n"
+      },
+      {
+        "hash": "2bc60efa9432c98c9b2b407e0fdb9f5928109bad",
+        "type": "feat",
+        "subject": "feat: add write-back, embedding export, and agent policies (Phase 3)",
+        "author": "Felix Geelhaar",
+        "author_email": "felix@felixgeelhaar.de",
+        "date": "2026-02-06T23:47:08+01:00",
+        "raw_message": "feat: add write-back, embedding export, and agent policies (Phase 3)\n\nImplement three major features completing the Phase 3 roadmap:\n\n1. Local-first write-back with outbox pattern — annotation bounded context\n   for agent notes, CQRS WriteRepository for action item overrides, SQLite\n   local store, outbox dispatcher for future upstream sync, MCP tools\n   (add_note, list_notes, delete_note, complete_action_item, update_action_item)\n   and CLI commands (note add/list/delete, action complete/update).\n\n2. Provider-agnostic embedding export — Chunk value object, three chunking\n   strategies (BySpeakerTurn, ByTimeWindow, ByTokenLimit), JSONL format,\n   export_embeddings MCP tool and CLI command.\n\n3. Per-meeting agent policies — domain policy value objects with first-match-wins\n   evaluation, YAML policy file loader, redaction engine (emails, speakers,\n   keywords, custom patterns), PolicyMiddleware wrapping MCP HandleToolJSON\n   for ACL enforcement and recursive JSON redaction. Enabled via\n   GRANOLA_MCP_POLICY_FILE env var.\n\n377 tests, 0 race conditions, all new packages ≥80% coverage.\n"
+      },
+      {
+        "hash": "e53b7e5adef36110ab38bf05a7ef1d08c8f63646",
+        "type": "feat",
+        "subject": "feat: add event streaming, webhook adapter, and multi-workspace support",
+        "author": "Felix Geelhaar",
+        "author_email": "felix@felixgeelhaar.de",
+        "date": "2026-02-06T22:27:27+01:00",
+        "raw_message": "feat: add event streaming, webhook adapter, and multi-workspace support\n\nPhase 2 implementation adding three capabilities:\n\n- Event streaming: domain events dispatched as MCP resource notifications\n  via EventDispatcher/MCPNotifier with background sync polling manager\n- Webhook adapter: HTTP transport with /health endpoint, HMAC-SHA256\n  validated /webhook/granola endpoint, --transport and --port CLI flags\n- Multi-workspace: workspace repository, use cases, list_workspaces MCP\n  tool, workspace://{id} resource, and workspace list CLI command\n\nAlso refactors NewServer to use ServerOptions struct for cleaner\ndependency injection. 212 tests passing, 0 race conditions.\n"
+      }
+    ]
+  },
+  "created_at": "2026-02-07T00:57:36.880203+01:00",
+  "updated_at": "2026-02-07T00:58:58.59784+01:00",
+  "published_at": "2026-02-07T00:58:58.597826+01:00"
+}
