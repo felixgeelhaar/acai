@@ -22,6 +22,22 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Install Zig
+        run: brew install zig
+
+      - name: Create cross-compilation wrappers
+        run: |
+          mkdir -p /tmp/zig-cc
+          cat > /tmp/zig-cc/x86_64-linux <<'WRAPPER'
+          #!/bin/sh
+          exec zig cc -target x86_64-linux-gnu "$@"
+          WRAPPER
+          cat > /tmp/zig-cc/aarch64-linux <<'WRAPPER'
+          #!/bin/sh
+          exec zig cc -target aarch64-linux-gnu "$@"
+          WRAPPER
+          chmod +x /tmp/zig-cc/*
+
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
