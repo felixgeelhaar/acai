@@ -1,0 +1,170 @@
+{
+  "id": "run-ab4f2179591e618a",
+  "plan_hash": "cde7cf57e7cecb20c2cb30cebd02a56725b8797556d86c690427d3a70276d799",
+  "repo_id": "git@github.com:felixgeelhaar/granola-mcp.git",
+  "repo_root": "/Users/felixgeelhaar/Developer/projects/open_source/granola-mcp",
+  "base_ref": "v1.0.0",
+  "head_sha": "198c2488a23cd45c6f6d0ddb8184cb588766a6df",
+  "commits": [
+    "198c2488a23cd45c6f6d0ddb8184cb588766a6df",
+    "3179dc213fb4ec3d65a13d87da4690b5cf9ee1cc",
+    "edd67c4413d09e17e7965031b1d0bedb3782d2f5",
+    "de2432a30210db60fd3eb5b9a393bbe2b237e1cf"
+  ],
+  "config_hash": "",
+  "plugin_plan_hash": "",
+  "version_current": "1.0.0",
+  "version_next": "1.0.1",
+  "bump_kind": "none",
+  "confidence": 0,
+  "risk_score": 0,
+  "reasons": null,
+  "actor_type": "user",
+  "actor_id": "cli",
+  "thresholds": {
+    "auto_approve_risk_threshold": 0,
+    "require_approval_above": 0,
+    "block_release_above": 0
+  },
+  "tag_name": "v1.0.1",
+  "notes": {
+    "text": "- docs: add how-it-works technical documentation\n- chore: add .gitignore\n- docs: add comprehensive README with coverage badge\n- chore: add MIT license\n",
+    "audience_preset": "",
+    "tone_preset": "",
+    "provider": "basic",
+    "model": "",
+    "generated_at": "2026-02-07T11:11:32.279457+01:00"
+  },
+  "approval": {
+    "approved_by": "felixgeelhaar",
+    "approved_at": "2026-02-07T11:11:35.56662+01:00",
+    "auto_approved": true,
+    "plan_hash": "cde7cf57e7cecb20c2cb30cebd02a56725b8797556d86c690427d3a70276d799",
+    "risk_score": 0,
+    "approver_type": "user"
+  },
+  "steps": [
+    {
+      "name": "create-tag",
+      "type": "tag",
+      "config_hash": "",
+      "idempotency_key": ""
+    }
+  ],
+  "step_status": {
+    "create-tag": {
+      "state": "done",
+      "attempts": 1,
+      "started_at": "2026-02-07T11:11:38.304844+01:00",
+      "completed_at": "2026-02-07T11:11:39.36682+01:00",
+      "output": "Created and pushed tag v1.0.1"
+    }
+  },
+  "state": "published",
+  "history": [
+    {
+      "at": "2026-02-07T11:11:21.405123+01:00",
+      "from": "draft",
+      "to": "planned",
+      "event": "PLAN",
+      "actor": "cli",
+      "reason": "Release planned"
+    },
+    {
+      "at": "2026-02-07T11:11:28.154927+01:00",
+      "from": "planned",
+      "to": "versioned",
+      "event": "BUMP",
+      "actor": "cli",
+      "reason": "Version applied",
+      "metadata": {
+        "tag_name": "v1.0.1",
+        "version": "1.0.1"
+      }
+    },
+    {
+      "at": "2026-02-07T11:11:32.279469+01:00",
+      "from": "versioned",
+      "to": "notes_ready",
+      "event": "GENERATE_NOTES",
+      "actor": "cli",
+      "reason": "Notes generated"
+    },
+    {
+      "at": "2026-02-07T11:11:35.566629+01:00",
+      "from": "notes_ready",
+      "to": "approved",
+      "event": "APPROVE",
+      "actor": "felixgeelhaar",
+      "reason": "Release approved",
+      "metadata": {
+        "auto_approved": "true",
+        "plan_hash": "cde7cf57e7cecb20c2cb30cebd02a56725b8797556d86c690427d3a70276d799",
+        "risk_score": "0.00"
+      }
+    },
+    {
+      "at": "2026-02-07T11:11:38.304069+01:00",
+      "from": "approved",
+      "to": "publishing",
+      "event": "START_PUBLISH",
+      "actor": "cli",
+      "reason": "Publishing started"
+    },
+    {
+      "at": "2026-02-07T11:11:39.368627+01:00",
+      "from": "publishing",
+      "to": "published",
+      "event": "PUBLISH_COMPLETE",
+      "actor": "cli",
+      "reason": "Release published"
+    }
+  ],
+  "changeset_id": "cs-1770459081393681000",
+  "changeset": {
+    "id": "cs-1770459081393681000",
+    "from_ref": "v1.0.0",
+    "to_ref": "HEAD",
+    "commits": [
+      {
+        "hash": "198c2488a23cd45c6f6d0ddb8184cb588766a6df",
+        "type": "docs",
+        "subject": "docs: add how-it-works technical documentation",
+        "author": "Felix Geelhaar",
+        "author_email": "felix@felixgeelhaar.de",
+        "date": "2026-02-07T11:07:37+01:00",
+        "raw_message": "docs: add how-it-works technical documentation\n\nDescribes data flow (read/write/policy), MCP server capabilities,\nCLI commands, DDD architecture, resilience model, and test suite.\n"
+      },
+      {
+        "hash": "3179dc213fb4ec3d65a13d87da4690b5cf9ee1cc",
+        "type": "chore",
+        "subject": "chore: add .gitignore",
+        "author": "Felix Geelhaar",
+        "author_email": "felix@felixgeelhaar.de",
+        "date": "2026-02-07T08:57:34+01:00",
+        "raw_message": "chore: add .gitignore\n"
+      },
+      {
+        "hash": "edd67c4413d09e17e7965031b1d0bedb3782d2f5",
+        "type": "docs",
+        "subject": "docs: add comprehensive README with coverage badge",
+        "author": "Felix Geelhaar",
+        "author_email": "felix@felixgeelhaar.de",
+        "date": "2026-02-07T08:42:24+01:00",
+        "raw_message": "docs: add comprehensive README with coverage badge\n"
+      },
+      {
+        "hash": "de2432a30210db60fd3eb5b9a393bbe2b237e1cf",
+        "type": "chore",
+        "subject": "chore: add MIT license",
+        "author": "Felix Geelhaar",
+        "author_email": "felix@felixgeelhaar.de",
+        "date": "2026-02-07T01:10:24+01:00",
+        "raw_message": "chore: add MIT license\n"
+      }
+    ]
+  },
+  "created_at": "2026-02-07T11:11:21.405041+01:00",
+  "updated_at": "2026-02-07T11:11:39.36863+01:00",
+  "published_at": "2026-02-07T11:11:39.368617+01:00"
+}
