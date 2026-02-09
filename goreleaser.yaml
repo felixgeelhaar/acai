@@ -36,6 +36,7 @@ brews:
     repository:
       owner: felixgeelhaar
       name: homebrew-tap
+    directory: Formula
     homepage: "https://felixgeelhaar.github.io/acai/"
     description: "Granola meeting intelligence for the MCP ecosystem"
     license: "MIT"
