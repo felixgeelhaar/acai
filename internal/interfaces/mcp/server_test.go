@@ -9,10 +9,8 @@ import (
 	annotationapp "github.com/felixgeelhaar/acai/internal/application/annotation"
 	embeddingapp "github.com/felixgeelhaar/acai/internal/application/embedding"
 	meetingapp "github.com/felixgeelhaar/acai/internal/application/meeting"
-	workspaceapp "github.com/felixgeelhaar/acai/internal/application/workspace"
 	annotatn "github.com/felixgeelhaar/acai/internal/domain/annotation"
 	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
-	"github.com/felixgeelhaar/acai/internal/domain/workspace"
 	mcpiface "github.com/felixgeelhaar/acai/internal/interfaces/mcp"
 )
 
@@ -279,23 +277,6 @@ func mustMeeting(t *testing.T, id domain.MeetingID, title string) *domain.Meetin
 	return m
 }
 
-type mockWorkspaceRepo struct {
-	workspaces []*workspace.Workspace
-}
-
-func (m *mockWorkspaceRepo) List(_ context.Context) ([]*workspace.Workspace, error) {
-	return m.workspaces, nil
-}
-
-func (m *mockWorkspaceRepo) FindByID(_ context.Context, id workspace.WorkspaceID) (*workspace.Workspace, error) {
-	for _, ws := range m.workspaces {
-		if ws.ID() == id {
-			return ws, nil
-		}
-	}
-	return nil, workspace.ErrWorkspaceNotFound
-}
-
 // mockNoteRepo implements annotation.NoteRepository for tests.
 type mockNoteRepo struct {
 	notes map[annotatn.NoteID]*annotatn.AgentNote
@@ -372,7 +353,6 @@ func (m *mockDispatcher) Dispatch(_ context.Context, events []domain.DomainEvent
 }
 
 func testDeps(repo *mockRepo) (mcpiface.ServerOptions, *mockNoteRepo, *mockWriteRepo) {
-	wsRepo := &mockWorkspaceRepo{}
 	noteRepo := newMockNoteRepo()
 	writeRepo := newMockWriteRepo()
 	dispatcher := &mockDispatcher{}
@@ -384,8 +364,6 @@ func testDeps(repo *mockRepo) (mcpiface.ServerOptions, *mockNoteRepo, *mockWrite
 		SearchTranscripts:  meetingapp.NewSearchTranscripts(repo),
 		GetActionItems:     meetingapp.NewGetActionItems(repo),
 		GetMeetingStats:    meetingapp.NewGetMeetingStats(repo),
-		ListWorkspaces:     workspaceapp.NewListWorkspaces(wsRepo),
-		GetWorkspace:       workspaceapp.NewGetWorkspace(wsRepo),
 		AddNote:            annotationapp.NewAddNote(noteRepo, repo, dispatcher),
 		ListNotes:          annotationapp.NewListNotes(noteRepo),
 		DeleteNote:         annotationapp.NewDeleteNote(noteRepo, dispatcher),
@@ -400,9 +378,3 @@ func newTestServer(repo *mockRepo) *mcpiface.Server {
 	return mcpiface.NewServer("acai", "test", opts)
 }
 
-func newTestServerWithWorkspaces(repo *mockRepo, wsRepo *mockWorkspaceRepo) *mcpiface.Server {
-	opts, _, _ := testDeps(repo)
-	opts.ListWorkspaces = workspaceapp.NewListWorkspaces(wsRepo)
-	opts.GetWorkspace = workspaceapp.NewGetWorkspace(wsRepo)
-	return mcpiface.NewServer("acai", "test", opts)
-}

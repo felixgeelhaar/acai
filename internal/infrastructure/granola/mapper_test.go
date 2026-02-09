@@ -7,29 +7,23 @@ import (
 	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
 )
 
-func TestMapDocumentToDomain(t *testing.T) {
+func TestMapNoteDetailToDomain(t *testing.T) {
 	now := time.Now().UTC()
-	dto := DocumentDTO{
-		ID:        "m-1",
-		Title:     "Sprint Planning",
+	markdown := "# Sprint Planning\nWe planned the sprint."
+	dto := NoteDetailResponse{
+		ID:    "m-1",
+		Title: "Sprint Planning",
+		Owner: UserDTO{Name: "Alice", Email: "alice@example.com"},
 		CreatedAt: now,
-		Source:    "zoom",
-		Participants: []ParticipantDTO{
-			{Name: "Alice", Email: "alice@example.com", Role: "host"},
-			{Name: "Bob", Email: "bob@example.com", Role: "attendee"},
+		Attendees: []UserDTO{
+			{Name: "Alice", Email: "alice@example.com"}, // duplicate of owner
+			{Name: "Bob", Email: "bob@example.com"},
 		},
-		Summary: &SummaryDTO{Content: "We planned the sprint.", Type: "auto"},
-		ActionItems: []ActionItemDTO{
-			{ID: "ai-1", Owner: "Alice", Text: "Write report", Done: false},
-		},
-		Metadata: &MetadataDTO{
-			Tags:         []string{"sprint"},
-			Links:        []string{"https://jira.example.com"},
-			ExternalRefs: map[string]string{"jira": "SPRINT-1"},
-		},
+		SummaryText:     "We planned the sprint.",
+		SummaryMarkdown: &markdown,
 	}
 
-	mtg, err := mapDocumentToDomain(dto)
+	mtg, err := mapNoteDetailToDomain(dto)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -40,23 +34,20 @@ func TestMapDocumentToDomain(t *testing.T) {
 	if mtg.Title() != "Sprint Planning" {
 		t.Errorf("got title %q", mtg.Title())
 	}
-	if mtg.Source() != domain.SourceZoom {
-		t.Errorf("got source %q", mtg.Source())
+	// Public API doesn't expose source — always SourceOther
+	if mtg.Source() != domain.SourceOther {
+		t.Errorf("got source %q, want %q", mtg.Source(), domain.SourceOther)
 	}
+	// Owner + Bob (Alice deduped)
 	if len(mtg.Participants()) != 2 {
-		t.Errorf("got %d participants", len(mtg.Participants()))
+		t.Errorf("got %d participants, want 2", len(mtg.Participants()))
 	}
 	if mtg.Summary() == nil {
 		t.Fatal("summary should be attached")
 	}
-	if mtg.Summary().Content() != "We planned the sprint." {
-		t.Errorf("got summary %q", mtg.Summary().Content())
-	}
-	if len(mtg.ActionItems()) != 1 {
-		t.Errorf("got %d action items", len(mtg.ActionItems()))
-	}
-	if mtg.Metadata().Tags()[0] != "sprint" {
-		t.Error("metadata tags not mapped")
+	// Should prefer markdown over text
+	if mtg.Summary().Content() != markdown {
+		t.Errorf("got summary %q, want markdown", mtg.Summary().Content())
 	}
 
 	// Reconstitution should not produce domain events
@@ -65,37 +56,87 @@ func TestMapDocumentToDomain(t *testing.T) {
 	}
 }
 
-func TestMapSourceToDomain(t *testing.T) {
-	tests := []struct {
-		input string
-		want  domain.Source
-	}{
-		{"zoom", domain.SourceZoom},
-		{"google_meet", domain.SourceMeet},
-		{"teams", domain.SourceTeams},
-		{"webex", domain.SourceOther},
-		{"", domain.SourceOther},
+func TestMapNoteDetailToDomain_TextSummaryFallback(t *testing.T) {
+	now := time.Now().UTC()
+	dto := NoteDetailResponse{
+		ID:          "m-1",
+		Title:       "Meeting",
+		Owner:       UserDTO{Name: "Alice", Email: "alice@example.com"},
+		CreatedAt:   now,
+		SummaryText: "Plain text summary",
 	}
 
-	for _, tt := range tests {
-		got := mapSourceToDomain(tt.input)
-		if got != tt.want {
-			t.Errorf("mapSourceToDomain(%q) = %q, want %q", tt.input, got, tt.want)
-		}
+	mtg, err := mapNoteDetailToDomain(dto)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if mtg.Summary() == nil {
+		t.Fatal("summary should be attached")
+	}
+	if mtg.Summary().Content() != "Plain text summary" {
+		t.Errorf("got summary %q", mtg.Summary().Content())
 	}
 }
 
-func TestMapTranscriptToDomain(t *testing.T) {
+func TestMapNoteDetailToDomain_NoSummary(t *testing.T) {
 	now := time.Now().UTC()
-	dto := TranscriptResponse{
-		MeetingID: "m-1",
-		Utterances: []UtteranceDTO{
-			{Speaker: "Alice", Text: "Hello", Timestamp: now, Confidence: 0.95},
-			{Speaker: "Bob", Text: "Hi", Timestamp: now.Add(time.Second), Confidence: 0.90},
+	dto := NoteDetailResponse{
+		ID:        "m-1",
+		Title:     "Meeting",
+		Owner:     UserDTO{Name: "Alice", Email: "alice@example.com"},
+		CreatedAt: now,
+	}
+
+	mtg, err := mapNoteDetailToDomain(dto)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if mtg.Summary() != nil {
+		t.Error("expected no summary")
+	}
+}
+
+func TestMapNoteListItemToDomain(t *testing.T) {
+	now := time.Now().UTC()
+	dto := NoteListItem{
+		ID:        "m-1",
+		Title:     "Sprint Planning",
+		Owner:     UserDTO{Name: "Alice", Email: "alice@example.com"},
+		CreatedAt: now,
+	}
+
+	mtg, err := mapNoteListItemToDomain(dto)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if mtg.ID() != "m-1" {
+		t.Errorf("got id %q", mtg.ID())
+	}
+	if mtg.Title() != "Sprint Planning" {
+		t.Errorf("got title %q", mtg.Title())
+	}
+	if len(mtg.Participants()) != 1 {
+		t.Errorf("got %d participants, want 1", len(mtg.Participants()))
+	}
+	if mtg.Participants()[0].Role() != domain.RoleHost {
+		t.Errorf("owner should be host, got %q", mtg.Participants()[0].Role())
+	}
+}
+
+func TestMapTranscriptFromDetail(t *testing.T) {
+	now := time.Now().UTC()
+	dto := NoteDetailResponse{
+		ID: "m-1",
+		Transcript: []TranscriptItemDTO{
+			{Speaker: "Alice", Text: "Hello", Timestamp: now},
+			{Speaker: "Bob", Text: "Hi", Timestamp: now.Add(time.Second)},
 		},
 	}
 
-	transcript := mapTranscriptToDomain("m-1", dto)
+	transcript := mapTranscriptFromDetail("m-1", dto)
+	if transcript == nil {
+		t.Fatal("expected transcript")
+	}
 	if transcript.MeetingID() != "m-1" {
 		t.Errorf("got meeting id %q", transcript.MeetingID())
 	}
@@ -107,31 +148,29 @@ func TestMapTranscriptToDomain(t *testing.T) {
 	}
 }
 
-func TestMapActionItemToDomain_Completed(t *testing.T) {
-	dto := ActionItemDTO{
-		ID:    "ai-1",
-		Owner: "Alice",
-		Text:  "Write report",
-		Done:  true,
+func TestMapTranscriptFromDetail_Empty(t *testing.T) {
+	dto := NoteDetailResponse{
+		ID:         "m-1",
+		Transcript: nil,
 	}
 
-	item, err := mapActionItemToDomain("m-1", dto)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if !item.IsCompleted() {
-		t.Error("action item should be completed")
+	transcript := mapTranscriptFromDetail("m-1", dto)
+	if transcript != nil {
+		t.Error("expected nil transcript for empty transcript list")
 	}
 }
 
-func TestMapActionItemToDomain_InvalidSkipped(t *testing.T) {
-	dto := ActionItemDTO{
-		ID:   "",
-		Text: "Invalid",
-	}
+func TestMapUserToDomain(t *testing.T) {
+	dto := UserDTO{Name: "Alice", Email: "alice@example.com"}
+	p := mapUserToDomain(dto)
 
-	_, err := mapActionItemToDomain("m-1", dto)
-	if err == nil {
-		t.Error("expected error for empty ID")
+	if p.Name() != "Alice" {
+		t.Errorf("got name %q", p.Name())
+	}
+	if p.Email() != "alice@example.com" {
+		t.Errorf("got email %q", p.Email())
+	}
+	if p.Role() != domain.RoleAttendee {
+		t.Errorf("got role %q, want attendee", p.Role())
 	}
 }

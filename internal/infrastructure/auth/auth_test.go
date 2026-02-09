@@ -31,8 +31,8 @@ func TestFileTokenStore_SaveAndLoad(t *testing.T) {
 	if loaded.Token().AccessToken() != cred.Token().AccessToken() {
 		t.Errorf("got access token %q", loaded.Token().AccessToken())
 	}
-	if loaded.Workspace() != "test-ws" {
-		t.Errorf("got workspace %q", loaded.Workspace())
+	if loaded.Workspace() != "" {
+		t.Errorf("got workspace %q, want empty", loaded.Workspace())
 	}
 }
 
@@ -114,18 +114,6 @@ func TestService_LoginAPIToken_EmptyToken(t *testing.T) {
 	}
 }
 
-func TestService_LoginOAuth_NotSupported(t *testing.T) {
-	dir := t.TempDir()
-	store := infraauth.NewFileTokenStore(dir)
-	svc := infraauth.NewService(store)
-
-	_, err := svc.Login(context.Background(), domain.LoginParams{
-		Method: domain.AuthOAuth,
-	})
-	if err != domain.ErrOAuthNotSupported {
-		t.Errorf("got error %v, want %v", err, domain.ErrOAuthNotSupported)
-	}
-}
 
 func TestService_Logout(t *testing.T) {
 	dir := t.TempDir()
@@ -175,5 +163,5 @@ func TestService_LoginUnsupportedMethod(t *testing.T) {
 
 func testCredential() *domain.Credential {
 	token := domain.NewToken("test-access", "test-refresh", time.Now().Add(1*time.Hour).UTC())
-	return domain.NewCredential(domain.AuthOAuth, token, "test-ws")
+	return domain.NewCredential(domain.AuthAPIToken, token, "")
 }

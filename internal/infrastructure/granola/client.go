@@ -11,7 +11,9 @@ import (
 	"time"
 )
 
-// Client wraps the Granola REST API.
+const apiClientTimeout = 30 * time.Second
+
+// Client wraps the Granola public API.
 // This is an infrastructure concern — the domain has no knowledge of HTTP.
 type Client struct {
 	baseURL    string
@@ -21,7 +23,7 @@ type Client struct {
 
 func NewClient(baseURL string, httpClient *http.Client, token string) *Client {
 	if httpClient == nil {
-		httpClient = &http.Client{Timeout: 30 * time.Second}
+		httpClient = &http.Client{Timeout: apiClientTimeout}
 	}
 	return &Client{
 		baseURL:    baseURL,
@@ -34,50 +36,35 @@ func (c *Client) SetToken(token string) {
 	c.token = token
 }
 
-func (c *Client) GetDocuments(ctx context.Context, since *time.Time, limit, offset int) (*DocumentListResponse, error) {
+// ListNotes calls GET /v1/notes with optional cursor pagination.
+func (c *Client) ListNotes(ctx context.Context, createdAfter *time.Time, cursor string, pageSize int) (*NoteListResponse, error) {
 	params := url.Values{}
-	if since != nil {
-		params.Set("since", since.Format(time.RFC3339))
+	if createdAfter != nil {
+		params.Set("created_after", createdAfter.Format(time.RFC3339))
 	}
-	if limit > 0 {
-		params.Set("limit", strconv.Itoa(limit))
+	if cursor != "" {
+		params.Set("cursor", cursor)
 	}
-	if offset > 0 {
-		params.Set("offset", strconv.Itoa(offset))
+	if pageSize > 0 {
+		params.Set("page_size", strconv.Itoa(pageSize))
 	}
 
-	var resp DocumentListResponse
-	if err := c.get(ctx, "/v2/get-documents", params, &resp); err != nil {
+	var resp NoteListResponse
+	if err := c.get(ctx, "/v1/notes", params, &resp); err != nil {
 		return nil, err
 	}
 	return &resp, nil
 }
 
-func (c *Client) GetDocument(ctx context.Context, id string) (*DocumentDTO, error) {
+// GetNote calls GET /v1/notes/{id} with optional transcript inclusion.
+func (c *Client) GetNote(ctx context.Context, id string, includeTranscript bool) (*NoteDetailResponse, error) {
 	params := url.Values{}
-	params.Set("id", id)
-
-	var resp DocumentDTO
-	if err := c.get(ctx, "/v2/get-document", params, &resp); err != nil {
-		return nil, err
+	if includeTranscript {
+		params.Set("include", "transcript")
 	}
-	return &resp, nil
-}
 
-func (c *Client) GetTranscript(ctx context.Context, meetingID string) (*TranscriptResponse, error) {
-	params := url.Values{}
-	params.Set("meeting_id", meetingID)
-
-	var resp TranscriptResponse
-	if err := c.get(ctx, "/v2/get-document-transcript", params, &resp); err != nil {
-		return nil, err
-	}
-	return &resp, nil
-}
-
-func (c *Client) GetWorkspaces(ctx context.Context) (*WorkspaceListResponse, error) {
-	var resp WorkspaceListResponse
-	if err := c.get(ctx, "/v2/get-workspaces", nil, &resp); err != nil {
+	var resp NoteDetailResponse
+	if err := c.get(ctx, "/v1/notes/"+url.PathEscape(id), params, &resp); err != nil {
 		return nil, err
 	}
 	return &resp, nil

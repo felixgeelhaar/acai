@@ -34,23 +34,23 @@ func TestToken_ExpiredInPast(t *testing.T) {
 func TestCredential_IsValid(t *testing.T) {
 	future := time.Now().Add(1 * time.Hour).UTC()
 	token := auth.NewToken("access", "refresh", future)
-	cred := auth.NewCredential(auth.AuthOAuth, token, "my-workspace")
+	cred := auth.NewCredential(auth.AuthAPIToken, token, "")
 
 	if !cred.IsValid() {
 		t.Error("credential with valid token should be valid")
 	}
-	if cred.Method() != auth.AuthOAuth {
+	if cred.Method() != auth.AuthAPIToken {
 		t.Errorf("got method %q", cred.Method())
 	}
-	if cred.Workspace() != "my-workspace" {
-		t.Errorf("got workspace %q", cred.Workspace())
+	if cred.Workspace() != "" {
+		t.Errorf("got workspace %q, want empty", cred.Workspace())
 	}
 }
 
 func TestCredential_InvalidWhenExpired(t *testing.T) {
 	past := time.Now().Add(-1 * time.Hour).UTC()
 	token := auth.NewToken("access", "refresh", past)
-	cred := auth.NewCredential(auth.AuthOAuth, token, "ws")
+	cred := auth.NewCredential(auth.AuthAPIToken, token, "")
 
 	if cred.IsValid() {
 		t.Error("credential with expired token should not be valid")
@@ -60,7 +60,7 @@ func TestCredential_InvalidWhenExpired(t *testing.T) {
 func TestCredential_InvalidWhenEmptyToken(t *testing.T) {
 	future := time.Now().Add(1 * time.Hour).UTC()
 	token := auth.NewToken("", "refresh", future)
-	cred := auth.NewCredential(auth.AuthOAuth, token, "ws")
+	cred := auth.NewCredential(auth.AuthAPIToken, token, "")
 
 	if cred.IsValid() {
 		t.Error("credential with empty access token should not be valid")

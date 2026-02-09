@@ -1,6 +1,6 @@
 // Package auth contains the authentication bounded context.
 // It models the user's credentials and authentication state
-// as domain concepts, independent of any specific OAuth provider.
+// as domain concepts, independent of any specific auth provider.
 package auth
 
 import (
@@ -10,10 +10,9 @@ import (
 )
 
 var (
-	ErrNotAuthenticated  = errors.New("not authenticated")
-	ErrTokenExpired      = errors.New("token has expired")
-	ErrInvalidToken      = errors.New("invalid token")
-	ErrOAuthNotSupported     = errors.New("OAuth login is not yet supported; use --method api_token with ACAI_GRANOLA_API_TOKEN")
+	ErrNotAuthenticated      = errors.New("not authenticated")
+	ErrTokenExpired          = errors.New("token has expired")
+	ErrInvalidToken          = errors.New("invalid token")
 	ErrMissingAPIToken       = errors.New("API token is required: set ACAI_GRANOLA_API_TOKEN environment variable")
 	ErrInvalidAPIToken       = errors.New("API token appears invalid: token must be at least 10 characters")
 	ErrUnsupportedAuthMethod = errors.New("unsupported authentication method")
@@ -23,7 +22,6 @@ var (
 type AuthMethod string
 
 const (
-	AuthOAuth    AuthMethod = "oauth"
 	AuthAPIToken AuthMethod = "api_token"
 )
 

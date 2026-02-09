@@ -18,11 +18,6 @@ type Config struct {
 	Policy     PolicyConfig
 	Sync       SyncConfig
 	Logging    LoggingConfig
-	Webhook    WebhookConfig
-}
-
-type WebhookConfig struct {
-	Secret string
 }
 
 type GranolaConfig struct {
@@ -98,7 +93,6 @@ func Load() *Config {
 	}
 	if v := os.Getenv("ACAI_GRANOLA_API_TOKEN"); v != "" {
 		cfg.Granola.APIToken = v
-		cfg.Granola.AuthMethod = "api_token"
 	}
 	if v := os.Getenv("ACAI_MCP_TRANSPORT"); v != "" {
 		cfg.MCP.Transport = v
@@ -119,9 +113,6 @@ func Load() *Config {
 	if v := os.Getenv("ACAI_LOGGING_FORMAT"); v != "" {
 		cfg.Logging.Format = v
 	}
-	if v := os.Getenv("ACAI_WEBHOOK_SECRET"); v != "" {
-		cfg.Webhook.Secret = v
-	}
 	if v := os.Getenv("ACAI_POLICY_FILE"); v != "" {
 		cfg.Policy.FilePath = v
 		cfg.Policy.Enabled = true
@@ -137,8 +128,8 @@ func Default() *Config {
 	}
 	return &Config{
 		Granola: GranolaConfig{
-			APIURL:     "https://api.granola.ai",
-			AuthMethod: "oauth",
+			APIURL:     "https://public-api.granola.ai",
+			AuthMethod: "api_token",
 		},
 		MCP: MCPConfig{
 			ServerName: "acai",

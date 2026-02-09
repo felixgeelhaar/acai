@@ -16,7 +16,6 @@ import (
 	embeddingapp "github.com/felixgeelhaar/acai/internal/application/embedding"
 	exportapp "github.com/felixgeelhaar/acai/internal/application/export"
 	meetingapp "github.com/felixgeelhaar/acai/internal/application/meeting"
-	workspaceapp "github.com/felixgeelhaar/acai/internal/application/workspace"
 	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
 	infraauth "github.com/felixgeelhaar/acai/internal/infrastructure/auth"
 	"github.com/felixgeelhaar/acai/internal/infrastructure/cache"
@@ -106,9 +105,6 @@ func main() {
 		granolaClient.SetToken(cred.Token().AccessToken())
 	}
 
-	// Workspace repository
-	wsRepo := granola.NewWorkspaceRepository(granolaClient)
-
 	// Local store (SQLite for write-side: notes, action item overrides, outbox)
 	localDir := cfg.Cache.Dir // Reuse cache dir for local store
 	if err := os.MkdirAll(localDir, 0o700); err != nil {
@@ -134,8 +130,9 @@ func main() {
 		writeRepo = localstore.NewWriteRepository(localDB)
 	}
 
-	// Event infrastructure: inner dispatcher → outbox decorator
-	innerDispatcher := events.NewDispatcher(nil) // notifier wired after MCP server creation
+	// Event infrastructure: notifier → dispatcher → outbox decorator
+	notifier := events.NewMCPNotifier()
+	innerDispatcher := events.NewDispatcher(notifier)
 	var dispatcher domain.EventDispatcher = innerDispatcher
 	if localDB != nil {
 		outboxStore := outbox.NewSQLiteStore(localDB)
@@ -155,8 +152,6 @@ func main() {
 	login := authapp.NewLogin(authService)
 	checkStatus := authapp.NewCheckStatus(authService)
 	logout := authapp.NewLogout(authService)
-	listWorkspaces := workspaceapp.NewListWorkspaces(wsRepo)
-	getWorkspace := workspaceapp.NewGetWorkspace(wsRepo)
 
 	// Write use cases (require local DB)
 	var addNote *annotationapp.AddNote
@@ -176,6 +171,17 @@ func main() {
 
 	// --- Interfaces Layer ---
 
+	// Load policy engine (optional)
+	var policyEngine *infraPolicy.Engine
+	if cfg.Policy.Enabled && cfg.Policy.FilePath != "" {
+		loadResult, policyErr := infraPolicy.LoadFromFile(cfg.Policy.FilePath)
+		if policyErr != nil {
+			_, _ = fmt.Fprintf(os.Stderr, "Warning: cannot load policy file: %v\n", policyErr)
+		} else {
+			policyEngine = infraPolicy.NewEngine(loadResult)
+		}
+	}
+
 	// MCP server
 	mcpServer := mcpiface.NewServer(cfg.MCP.ServerName, version, mcpiface.ServerOptions{
 		ListMeetings:       listMeetings,
@@ -184,28 +190,14 @@ func main() {
 		SearchTranscripts:  searchTranscripts,
 		GetActionItems:     getActionItems,
 		GetMeetingStats:    getMeetingStats,
-		ListWorkspaces:     listWorkspaces,
-		GetWorkspace:       getWorkspace,
 		AddNote:            addNote,
 		ListNotes:          listNotes,
 		DeleteNote:         deleteNote,
 		CompleteActionItem: completeActionItem,
 		UpdateActionItem:   updateActionItem,
 		ExportEmbeddings:   exportEmbeddings,
+		PolicyEngine:       policyEngine,
 	})
-
-	// Policy middleware (wraps MCP server if policy file is configured).
-	// TODO: integrate policy middleware into the MCP request pipeline;
-	// currently constructed but not wired into the serving path.
-	if cfg.Policy.Enabled && cfg.Policy.FilePath != "" {
-		loadResult, policyErr := infraPolicy.LoadFromFile(cfg.Policy.FilePath)
-		if policyErr != nil {
-			_, _ = fmt.Fprintf(os.Stderr, "Warning: cannot load policy file: %v\n", policyErr)
-		} else {
-			policyEngine := infraPolicy.NewEngine(loadResult)
-			_ = mcpiface.NewPolicyMiddleware(mcpServer, policyEngine)
-		}
-	}
 
 	// CLI dependencies
 	deps := &cli.Dependencies{
@@ -219,8 +211,6 @@ func main() {
 		Login:              login,
 		CheckStatus:        checkStatus,
 		Logout:             logout,
-		ListWorkspaces:     listWorkspaces,
-		GetWorkspace:       getWorkspace,
 		EventDispatcher:    dispatcher,
 		MCPServer:          mcpServer,
 		AddNote:            addNote,

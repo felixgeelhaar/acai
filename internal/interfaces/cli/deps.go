@@ -5,14 +5,12 @@ package cli
 import (
 	"errors"
 	"io"
-	"net/http"
 
 	annotationapp "github.com/felixgeelhaar/acai/internal/application/annotation"
 	authapp "github.com/felixgeelhaar/acai/internal/application/auth"
 	embeddingapp "github.com/felixgeelhaar/acai/internal/application/embedding"
 	exportapp "github.com/felixgeelhaar/acai/internal/application/export"
 	meetingapp "github.com/felixgeelhaar/acai/internal/application/meeting"
-	workspaceapp "github.com/felixgeelhaar/acai/internal/application/workspace"
 	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
 	mcpiface "github.com/felixgeelhaar/acai/internal/interfaces/mcp"
 )
@@ -35,10 +33,7 @@ type Dependencies struct {
 	Login             *authapp.Login
 	CheckStatus       *authapp.CheckStatus
 	Logout            *authapp.Logout
-	ListWorkspaces    *workspaceapp.ListWorkspaces
-	GetWorkspace      *workspaceapp.GetWorkspace
 	EventDispatcher   domain.EventDispatcher
-	WebhookHandler    http.Handler
 	MCPServer         *mcpiface.Server
 	Out               io.Writer
 

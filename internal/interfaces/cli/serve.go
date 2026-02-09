@@ -2,7 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -32,11 +31,7 @@ func newServeCmd(deps *Dependencies) *cobra.Command {
 				_, _ = fmt.Fprintf(deps.Out, "Starting %s v%s MCP server (http on %s)...\n",
 					deps.MCPServer.Name(), deps.MCPServer.Version(), addr)
 
-				err := deps.MCPServer.ServeHTTP(ctx, addr, func(mux *http.ServeMux) {
-					if deps.WebhookHandler != nil {
-						mux.Handle("/webhook/granola", deps.WebhookHandler)
-					}
-				})
+				err := deps.MCPServer.ServeHTTP(ctx, addr, nil)
 				if err != nil {
 					if ctx.Err() != nil {
 						_, _ = fmt.Fprintln(os.Stderr, "MCP server stopped.")

@@ -18,7 +18,6 @@ type ExportEmbeddingsInput struct {
 	MeetingIDs []domain.MeetingID
 	Strategy   string // "speaker_turn", "time_window", "token_limit"
 	MaxTokens  int
-	Format     string // "jsonl"
 }
 
 type ExportEmbeddingsOutput struct {
@@ -92,7 +91,7 @@ func (uc *ExportEmbeddings) Execute(ctx context.Context, input ExportEmbeddingsI
 		}
 	}
 
-	formatter := resolveFormat(input.Format)
+	formatter := &JSONLFormat{}
 	content, err := formatter.FormatChunks(allChunks)
 	if err != nil {
 		return nil, fmt.Errorf("format chunks: %w", err)
@@ -117,7 +116,3 @@ func resolveStrategy(name string, maxTokens int) (ChunkStrategy, error) {
 	}
 }
 
-func resolveFormat(name string) ExportFormat {
-	// Only JSONL is supported for now; default to it.
-	return &JSONLFormat{}
-}

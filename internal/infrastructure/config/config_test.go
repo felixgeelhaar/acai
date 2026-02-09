@@ -10,7 +10,7 @@ import (
 func TestDefault_HasSaneDefaults(t *testing.T) {
 	cfg := config.Default()
 
-	if cfg.Granola.APIURL != "https://api.granola.ai" {
+	if cfg.Granola.APIURL != "https://public-api.granola.ai" {
 		t.Errorf("got api url %q", cfg.Granola.APIURL)
 	}
 	if cfg.MCP.Transport != "stdio" {

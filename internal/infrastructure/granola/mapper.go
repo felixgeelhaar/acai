@@ -4,21 +4,31 @@ import (
 	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
 )
 
-// Mapper translates between Granola API DTOs and domain types.
+// Mapper translates between Granola public API DTOs and domain types.
 // This is the core of the anti-corruption layer — ensuring that
 // external API concepts never leak into our domain model.
 
-func mapDocumentToDomain(dto DocumentDTO) (*domain.Meeting, error) {
-	participants := make([]domain.Participant, len(dto.Participants))
-	for i, p := range dto.Participants {
-		participants[i] = mapParticipantToDomain(p)
+func mapNoteDetailToDomain(dto NoteDetailResponse) (*domain.Meeting, error) {
+	participants := make([]domain.Participant, 0, len(dto.Attendees)+1)
+
+	// Owner is the host
+	if dto.Owner.Name != "" || dto.Owner.Email != "" {
+		participants = append(participants, domain.NewParticipant(dto.Owner.Name, dto.Owner.Email, domain.RoleHost))
+	}
+
+	// Attendees (excluding owner to avoid duplicates)
+	for _, a := range dto.Attendees {
+		if a.Email == dto.Owner.Email && a.Name == dto.Owner.Name {
+			continue
+		}
+		participants = append(participants, mapUserToDomain(a))
 	}
 
 	mtg, err := domain.New(
 		domain.MeetingID(dto.ID),
 		dto.Title,
 		dto.CreatedAt,
-		mapSourceToDomain(dto.Source),
+		domain.SourceOther, // Public API doesn't expose source
 		participants,
 	)
 	if err != nil {
@@ -28,21 +38,15 @@ func mapDocumentToDomain(dto DocumentDTO) (*domain.Meeting, error) {
 	// Clear the creation event since this is a reconstitution, not a new creation
 	mtg.ClearDomainEvents()
 
-	if dto.Summary != nil {
-		mtg.AttachSummary(mapSummaryToDomain(domain.MeetingID(dto.ID), *dto.Summary))
+	// Map summary — prefer markdown if present, fall back to text
+	summaryContent := dto.SummaryText
+	summaryKind := domain.SummaryAuto
+	if dto.SummaryMarkdown != nil && *dto.SummaryMarkdown != "" {
+		summaryContent = *dto.SummaryMarkdown
+	}
+	if summaryContent != "" {
+		mtg.AttachSummary(domain.NewSummary(domain.MeetingID(dto.ID), summaryContent, summaryKind))
 		mtg.ClearDomainEvents()
-	}
-
-	for _, ai := range dto.ActionItems {
-		item, err := mapActionItemToDomain(domain.MeetingID(dto.ID), ai)
-		if err != nil {
-			continue
-		}
-		mtg.AddActionItem(item)
-	}
-
-	if dto.Metadata != nil {
-		mtg.SetMetadata(mapMetadataToDomain(*dto.Metadata))
 	}
 
 	// Clear all events — reconstitution should not produce events
@@ -51,60 +55,37 @@ func mapDocumentToDomain(dto DocumentDTO) (*domain.Meeting, error) {
 	return mtg, nil
 }
 
-func mapParticipantToDomain(dto ParticipantDTO) domain.Participant {
-	role := domain.RoleAttendee
-	if dto.Role == "host" {
-		role = domain.RoleHost
+func mapNoteListItemToDomain(dto NoteListItem) (*domain.Meeting, error) {
+	var participants []domain.Participant
+	if dto.Owner.Name != "" || dto.Owner.Email != "" {
+		participants = append(participants, domain.NewParticipant(dto.Owner.Name, dto.Owner.Email, domain.RoleHost))
 	}
-	return domain.NewParticipant(dto.Name, dto.Email, role)
-}
 
-func mapSourceToDomain(source string) domain.Source {
-	switch source {
-	case "zoom":
-		return domain.SourceZoom
-	case "google_meet":
-		return domain.SourceMeet
-	case "teams":
-		return domain.SourceTeams
-	default:
-		return domain.SourceOther
-	}
-}
-
-func mapSummaryToDomain(meetingID domain.MeetingID, dto SummaryDTO) domain.Summary {
-	kind := domain.SummaryAuto
-	if dto.Type == "user_edited" {
-		kind = domain.SummaryEdited
-	}
-	return domain.NewSummary(meetingID, dto.Content, kind)
-}
-
-func mapActionItemToDomain(meetingID domain.MeetingID, dto ActionItemDTO) (*domain.ActionItem, error) {
-	item, err := domain.NewActionItem(
-		domain.ActionItemID(dto.ID),
-		meetingID,
-		dto.Owner,
-		dto.Text,
-		dto.DueDate,
+	mtg, err := domain.New(
+		domain.MeetingID(dto.ID),
+		dto.Title,
+		dto.CreatedAt,
+		domain.SourceOther,
+		participants,
 	)
 	if err != nil {
 		return nil, err
 	}
-	if dto.Done {
-		item.Complete()
+	mtg.ClearDomainEvents()
+	return mtg, nil
+}
+
+func mapUserToDomain(dto UserDTO) domain.Participant {
+	return domain.NewParticipant(dto.Name, dto.Email, domain.RoleAttendee)
+}
+
+func mapTranscriptFromDetail(meetingID domain.MeetingID, dto NoteDetailResponse) *domain.Transcript {
+	if len(dto.Transcript) == 0 {
+		return nil
 	}
-	return item, nil
-}
-
-func mapMetadataToDomain(dto MetadataDTO) domain.Metadata {
-	return domain.NewMetadata(dto.Tags, dto.Links, dto.ExternalRefs)
-}
-
-func mapTranscriptToDomain(meetingID domain.MeetingID, dto TranscriptResponse) *domain.Transcript {
-	utterances := make([]domain.Utterance, len(dto.Utterances))
-	for i, u := range dto.Utterances {
-		utterances[i] = domain.NewUtterance(u.Speaker, u.Text, u.Timestamp, u.Confidence)
+	utterances := make([]domain.Utterance, len(dto.Transcript))
+	for i, item := range dto.Transcript {
+		utterances[i] = domain.NewUtterance(item.Speaker, item.Text, item.Timestamp, 0)
 	}
 	t := domain.NewTranscript(meetingID, utterances)
 	return &t

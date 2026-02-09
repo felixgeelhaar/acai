@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"strings"
 
 	domainpolicy "github.com/felixgeelhaar/acai/internal/domain/policy"
@@ -61,8 +62,9 @@ func (pm *PolicyMiddleware) extractMeetingContext(rawInput json.RawMessage) doma
 		ID        string   `json:"id"`
 		Tags      []string `json:"tags"`
 	}
-	// Best-effort extraction — if parsing fails, empty context (default allow applies)
-	_ = json.Unmarshal(rawInput, &input)
+	if err := json.Unmarshal(rawInput, &input); err != nil {
+		log.Printf("policy: failed to extract meeting context: %v", err)
+	}
 
 	meetingID := input.MeetingID
 	if meetingID == "" {

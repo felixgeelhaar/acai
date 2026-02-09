@@ -51,7 +51,6 @@ func newExportEmbeddingsCmd(deps *Dependencies) *cobra.Command {
 				MeetingIDs: meetingIDs,
 				Strategy:   strategy,
 				MaxTokens:  maxTokens,
-				Format:     "jsonl",
 			})
 			if err != nil {
 				return fmt.Errorf("export failed: %w", err)

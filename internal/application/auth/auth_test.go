@@ -35,7 +35,7 @@ func (m *mockAuthService) Logout(_ context.Context) error {
 
 func TestLogin_Success(t *testing.T) {
 	token := domain.NewToken("access", "refresh", time.Now().Add(1*time.Hour).UTC())
-	cred := domain.NewCredential(domain.AuthOAuth, token, "ws")
+	cred := domain.NewCredential(domain.AuthAPIToken, token, "ws")
 	svc := &mockAuthService{credential: cred}
 
 	uc := app.NewLogin(svc)
@@ -66,7 +66,7 @@ func TestLogin_Error(t *testing.T) {
 
 func TestCheckStatus_Authenticated(t *testing.T) {
 	token := domain.NewToken("access", "refresh", time.Now().Add(1*time.Hour).UTC())
-	cred := domain.NewCredential(domain.AuthOAuth, token, "ws")
+	cred := domain.NewCredential(domain.AuthAPIToken, token, "ws")
 	svc := &mockAuthService{credential: cred}
 
 	uc := app.NewCheckStatus(svc)

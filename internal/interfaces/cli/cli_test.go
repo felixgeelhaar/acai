@@ -12,11 +12,9 @@ import (
 	embeddingapp "github.com/felixgeelhaar/acai/internal/application/embedding"
 	exportapp "github.com/felixgeelhaar/acai/internal/application/export"
 	meetingapp "github.com/felixgeelhaar/acai/internal/application/meeting"
-	workspaceapp "github.com/felixgeelhaar/acai/internal/application/workspace"
 	"github.com/felixgeelhaar/acai/internal/domain/annotation"
 	domainauth "github.com/felixgeelhaar/acai/internal/domain/auth"
 	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
-	"github.com/felixgeelhaar/acai/internal/domain/workspace"
 	"github.com/felixgeelhaar/acai/internal/interfaces/cli"
 	mcpiface "github.com/felixgeelhaar/acai/internal/interfaces/mcp"
 )
@@ -25,7 +23,7 @@ func TestRootCmd_HasExpectedSubcommands(t *testing.T) {
 	deps := testDeps(t)
 	root := cli.NewRootCmd(deps)
 
-	expected := []string{"auth", "sync", "list", "export", "serve", "workspace", "note", "action", "version"}
+	expected := []string{"auth", "sync", "list", "export", "serve", "note", "action", "version"}
 	for _, name := range expected {
 		found := false
 		for _, cmd := range root.Commands() {
@@ -123,45 +121,6 @@ func TestExportMeetingCmd_MissingArg(t *testing.T) {
 	}
 }
 
-func TestWorkspaceListCmd(t *testing.T) {
-	deps := testDeps(t)
-	root := cli.NewRootCmd(deps)
-
-	root.SetArgs([]string{"workspace", "list"})
-	if err := root.Execute(); err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	output := deps.Out.(*bytes.Buffer).String()
-	if !strings.Contains(output, "No workspaces found") {
-		t.Errorf("expected empty workspace message, got: %q", output)
-	}
-}
-
-func TestWorkspaceListCmd_WithWorkspaces(t *testing.T) {
-	deps := testDeps(t)
-
-	// Replace workspace repo with one that returns data
-	ws1, _ := workspace.New("ws-1", "Engineering", "engineering")
-	ws2, _ := workspace.New("ws-2", "Design", "design")
-	wsRepo := &mockWorkspaceRepo{workspaces: []*workspace.Workspace{ws1, ws2}}
-	deps.ListWorkspaces = workspaceapp.NewListWorkspaces(wsRepo)
-
-	root := cli.NewRootCmd(deps)
-	root.SetArgs([]string{"workspace", "list"})
-	if err := root.Execute(); err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	output := deps.Out.(*bytes.Buffer).String()
-	if !strings.Contains(output, "Engineering") {
-		t.Errorf("expected workspace name, got: %q", output)
-	}
-	if !strings.Contains(output, "design") {
-		t.Errorf("expected workspace slug, got: %q", output)
-	}
-}
-
 func TestAuthLogoutCmd(t *testing.T) {
 	deps := testDeps(t)
 	root := cli.NewRootCmd(deps)
@@ -177,21 +136,18 @@ func TestAuthLogoutCmd(t *testing.T) {
 	}
 }
 
-func TestAuthLoginCmd_DefaultMethodIsAPIToken(t *testing.T) {
+func TestAuthLoginCmd_NoMethodFlag(t *testing.T) {
 	deps := testDeps(t)
 	root := cli.NewRootCmd(deps)
 
-	// Find the login command and check its --method flag default
+	// The --method flag should no longer exist
 	authCmd, _, _ := root.Find([]string{"auth", "login"})
 	if authCmd == nil {
 		t.Fatal("auth login command not found")
 	}
 	flag := authCmd.Flags().Lookup("method")
-	if flag == nil {
-		t.Fatal("--method flag not found")
-	}
-	if flag.DefValue != "api_token" {
-		t.Errorf("expected default method 'api_token', got %q", flag.DefValue)
+	if flag != nil {
+		t.Error("--method flag should not exist (only api_token is supported)")
 	}
 }
 
@@ -201,7 +157,7 @@ type mockAuthService struct{}
 
 func (m *mockAuthService) Login(_ context.Context, params domainauth.LoginParams) (*domainauth.Credential, error) {
 	token := domainauth.NewToken("test", "test", time.Now().Add(1*time.Hour).UTC())
-	return domainauth.NewCredential(params.Method, token, "test-ws"), nil
+	return domainauth.NewCredential(params.Method, token, ""), nil
 }
 func (m *mockAuthService) Status(_ context.Context) (*domainauth.Credential, error) {
 	return nil, domainauth.ErrNotAuthenticated
@@ -230,23 +186,6 @@ func (m *mockMeetingRepo) GetActionItems(_ context.Context, _ domain.MeetingID) 
 }
 func (m *mockMeetingRepo) Sync(_ context.Context, _ *time.Time) ([]domain.DomainEvent, error) {
 	return []domain.DomainEvent{}, nil
-}
-
-type mockWorkspaceRepo struct {
-	workspaces []*workspace.Workspace
-}
-
-func (m *mockWorkspaceRepo) List(_ context.Context) ([]*workspace.Workspace, error) {
-	return m.workspaces, nil
-}
-
-func (m *mockWorkspaceRepo) FindByID(_ context.Context, id workspace.WorkspaceID) (*workspace.Workspace, error) {
-	for _, ws := range m.workspaces {
-		if ws.ID() == id {
-			return ws, nil
-		}
-	}
-	return nil, workspace.ErrWorkspaceNotFound
 }
 
 type mockNoteRepo struct {
@@ -301,7 +240,6 @@ func testDeps(t *testing.T) *cli.Dependencies {
 	t.Helper()
 	repo := &mockMeetingRepo{}
 	authSvc := &mockAuthService{}
-	wsRepo := &mockWorkspaceRepo{}
 	noteRepo := &mockNoteRepo{}
 	writeRepo := &mockWriteRepo{}
 	dispatcher := &mockDispatcher{}
@@ -318,8 +256,6 @@ func testDeps(t *testing.T) *cli.Dependencies {
 		Login:             authapp.NewLogin(authSvc),
 		CheckStatus:       authapp.NewCheckStatus(authSvc),
 		Logout:            authapp.NewLogout(authSvc),
-		ListWorkspaces:    workspaceapp.NewListWorkspaces(wsRepo),
-		GetWorkspace:      workspaceapp.NewGetWorkspace(wsRepo),
 		AddNote:           annotationapp.NewAddNote(noteRepo, repo, dispatcher),
 		ListNotes:         annotationapp.NewListNotes(noteRepo),
 		DeleteNote:        annotationapp.NewDeleteNote(noteRepo, dispatcher),
@@ -327,17 +263,15 @@ func testDeps(t *testing.T) *cli.Dependencies {
 		UpdateActionItem:   meetingapp.NewUpdateActionItem(repo, writeRepo, dispatcher),
 		ExportEmbeddings:   embeddingapp.NewExportEmbeddings(repo, noteRepo),
 		MCPServer: mcpiface.NewServer("acai", "test", mcpiface.ServerOptions{
-			ListMeetings:      meetingapp.NewListMeetings(repo),
-			GetMeeting:        meetingapp.NewGetMeeting(repo),
-			GetTranscript:     meetingapp.NewGetTranscript(repo),
-			SearchTranscripts: meetingapp.NewSearchTranscripts(repo),
-			GetActionItems:    meetingapp.NewGetActionItems(repo),
-			GetMeetingStats:   meetingapp.NewGetMeetingStats(repo),
-			ListWorkspaces:    workspaceapp.NewListWorkspaces(wsRepo),
-			GetWorkspace:      workspaceapp.NewGetWorkspace(wsRepo),
-			AddNote:           annotationapp.NewAddNote(noteRepo, repo, dispatcher),
-			ListNotes:         annotationapp.NewListNotes(noteRepo),
-			DeleteNote:        annotationapp.NewDeleteNote(noteRepo, dispatcher),
+			ListMeetings:       meetingapp.NewListMeetings(repo),
+			GetMeeting:         meetingapp.NewGetMeeting(repo),
+			GetTranscript:      meetingapp.NewGetTranscript(repo),
+			SearchTranscripts:  meetingapp.NewSearchTranscripts(repo),
+			GetActionItems:     meetingapp.NewGetActionItems(repo),
+			GetMeetingStats:    meetingapp.NewGetMeetingStats(repo),
+			AddNote:            annotationapp.NewAddNote(noteRepo, repo, dispatcher),
+			ListNotes:          annotationapp.NewListNotes(noteRepo),
+			DeleteNote:         annotationapp.NewDeleteNote(noteRepo, dispatcher),
 			CompleteActionItem: meetingapp.NewCompleteActionItem(repo, writeRepo, dispatcher),
 			UpdateActionItem:   meetingapp.NewUpdateActionItem(repo, writeRepo, dispatcher),
 			ExportEmbeddings:   embeddingapp.NewExportEmbeddings(repo, noteRepo),

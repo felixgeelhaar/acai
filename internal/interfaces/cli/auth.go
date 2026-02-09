@@ -22,41 +22,30 @@ func newAuthCmd(deps *Dependencies) *cobra.Command {
 }
 
 func newAuthLoginCmd(deps *Dependencies) *cobra.Command {
-	var method string
-
-	cmd := &cobra.Command{
+	return &cobra.Command{
 		Use:   "login",
 		Short: "Authenticate with Granola (requires ACAI_GRANOLA_API_TOKEN env var)",
 		Long: `Authenticate with Granola using an API token.
 
 Set the ACAI_GRANOLA_API_TOKEN environment variable before running this command.
-OAuth is not yet supported.
 
 Example:
   export ACAI_GRANOLA_API_TOKEN=gra_xxxxx
   acai auth login`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			authMethod := domain.AuthAPIToken
-			if method == "oauth" {
-				authMethod = domain.AuthOAuth
-			}
-
 			out, err := deps.Login.Execute(cmd.Context(), authapp.LoginInput{
-				Method:   authMethod,
+				Method:   domain.AuthAPIToken,
 				APIToken: deps.GranolaAPIToken,
 			})
 			if err != nil {
 				return fmt.Errorf("login failed: %w", err)
 			}
 
-			_, _ = fmt.Fprintf(deps.Out, "Authenticated successfully (workspace: %s)\n", out.Credential.Workspace())
+			_, _ = fmt.Fprintln(deps.Out, "Authenticated successfully.")
+			_ = out // credential stored for subsequent commands
 			return nil
 		},
 	}
-
-	cmd.Flags().StringVar(&method, "method", "api_token", "Auth method: api_token (oauth not yet supported)")
-
-	return cmd
 }
 
 func newAuthLogoutCmd(deps *Dependencies) *cobra.Command {
@@ -91,8 +80,7 @@ func newAuthStatusCmd(deps *Dependencies) *cobra.Command {
 				return nil
 			}
 
-			_, _ = fmt.Fprintf(deps.Out, "Authenticated (workspace: %s, method: %s)\n",
-				out.Credential.Workspace(), out.Credential.Method())
+			_, _ = fmt.Fprintf(deps.Out, "Authenticated (method: %s)\n", out.Credential.Method())
 			return nil
 		},
 	}

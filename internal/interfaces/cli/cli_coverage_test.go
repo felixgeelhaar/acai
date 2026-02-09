@@ -232,11 +232,11 @@ func TestActionUpdateCmd_MissingArgs(t *testing.T) {
 	}
 }
 
-func TestAuthLoginCmd_APIToken(t *testing.T) {
+func TestAuthLoginCmd_DefaultMethod(t *testing.T) {
 	deps := testDeps(t)
 	root := cli.NewRootCmd(deps)
 
-	root.SetArgs([]string{"auth", "login", "--method", "api_token"})
+	root.SetArgs([]string{"auth", "login"})
 	if err := root.Execute(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

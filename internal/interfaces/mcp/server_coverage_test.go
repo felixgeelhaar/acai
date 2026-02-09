@@ -11,7 +11,6 @@ import (
 
 	meetingapp "github.com/felixgeelhaar/acai/internal/application/meeting"
 	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
-	"github.com/felixgeelhaar/acai/internal/domain/workspace"
 	mcpiface "github.com/felixgeelhaar/acai/internal/interfaces/mcp"
 )
 
@@ -263,65 +262,12 @@ func TestServer_HandleToolJSON_InvalidJSON_AllTools(t *testing.T) {
 	repo := newMockRepo()
 	srv := newTestServer(repo)
 
-	tools := []string{"list_meetings", "get_meeting", "get_transcript", "search_transcripts", "get_action_items", "meeting_stats", "list_workspaces", "add_note", "list_notes", "delete_note", "complete_action_item", "update_action_item", "export_embeddings"}
+	tools := []string{"list_meetings", "get_meeting", "get_transcript", "search_transcripts", "get_action_items", "meeting_stats", "add_note", "list_notes", "delete_note", "complete_action_item", "update_action_item", "export_embeddings"}
 	for _, tool := range tools {
 		_, err := srv.HandleToolJSON(context.Background(), tool, json.RawMessage(`{invalid`))
 		if err == nil {
 			t.Errorf("expected error for invalid JSON on tool %q", tool)
 		}
-	}
-}
-
-func TestServer_HandleListWorkspaces(t *testing.T) {
-	repo := newMockRepo()
-	ws1, _ := workspace.New("ws-1", "Engineering", "engineering")
-	ws2, _ := workspace.New("ws-2", "Design", "design")
-	wsRepo := &mockWorkspaceRepo{workspaces: []*workspace.Workspace{ws1, ws2}}
-	srv := newTestServerWithWorkspaces(repo, wsRepo)
-
-	results, err := srv.HandleListWorkspaces(context.Background(), mcpiface.ListWorkspacesToolInput{})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if len(results) != 2 {
-		t.Errorf("expected 2 workspaces, got %d", len(results))
-	}
-	if results[0].ID != "ws-1" {
-		t.Errorf("expected ws-1, got %s", results[0].ID)
-	}
-}
-
-func TestServer_HandleListWorkspaces_Empty(t *testing.T) {
-	repo := newMockRepo()
-	wsRepo := &mockWorkspaceRepo{workspaces: []*workspace.Workspace{}}
-	srv := newTestServerWithWorkspaces(repo, wsRepo)
-
-	results, err := srv.HandleListWorkspaces(context.Background(), mcpiface.ListWorkspacesToolInput{})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if len(results) != 0 {
-		t.Errorf("expected 0, got %d", len(results))
-	}
-}
-
-func TestServer_HandleToolJSON_ListWorkspaces(t *testing.T) {
-	repo := newMockRepo()
-	ws1, _ := workspace.New("ws-1", "Engineering", "engineering")
-	wsRepo := &mockWorkspaceRepo{workspaces: []*workspace.Workspace{ws1}}
-	srv := newTestServerWithWorkspaces(repo, wsRepo)
-
-	raw, err := srv.HandleToolJSON(context.Background(), "list_workspaces", json.RawMessage(`{}`))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	var results []mcpiface.WorkspaceResult
-	if err := json.Unmarshal(raw, &results); err != nil {
-		t.Fatalf("unmarshal error: %v", err)
-	}
-	if len(results) != 1 {
-		t.Errorf("expected 1 workspace, got %d", len(results))
 	}
 }
 
@@ -358,8 +304,6 @@ func TestServer_ServeHTTP_HealthEndpoint(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Use port 0 to get a random available port, but we need a known port for the test.
-	// Use a specific port instead.
 	port := 18923
 	addr := fmt.Sprintf(":%d", port)
 
@@ -386,7 +330,7 @@ func TestServer_ServeHTTP_HealthEndpoint(t *testing.T) {
 	}
 }
 
-func TestServer_ServeHTTP_WithWebhookRoute(t *testing.T) {
+func TestServer_ServeHTTP_WithExtraRoutes(t *testing.T) {
 	repo := newMockRepo()
 	srv := newTestServer(repo)
 
@@ -396,11 +340,11 @@ func TestServer_ServeHTTP_WithWebhookRoute(t *testing.T) {
 	port := 18924
 	addr := fmt.Sprintf(":%d", port)
 
-	webhookCalled := false
+	extraCalled := false
 	go func() {
 		_ = srv.ServeHTTP(ctx, addr, func(mux *http.ServeMux) {
-			mux.HandleFunc("/webhook/granola", func(w http.ResponseWriter, _ *http.Request) {
-				webhookCalled = true
+			mux.HandleFunc("/custom", func(w http.ResponseWriter, _ *http.Request) {
+				extraCalled = true
 				w.WriteHeader(http.StatusOK)
 			})
 		})
@@ -408,17 +352,17 @@ func TestServer_ServeHTTP_WithWebhookRoute(t *testing.T) {
 
 	time.Sleep(200 * time.Millisecond)
 
-	resp, err := http.Post(fmt.Sprintf("http://localhost:%d/webhook/granola", port), "application/json", nil)
+	resp, err := http.Get(fmt.Sprintf("http://localhost:%d/custom", port))
 	if err != nil {
-		t.Fatalf("webhook request failed: %v", err)
+		t.Fatalf("request failed: %v", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("expected 200, got %d", resp.StatusCode)
 	}
-	if !webhookCalled {
-		t.Error("webhook handler was not called")
+	if !extraCalled {
+		t.Error("extra route handler was not called")
 	}
 }
 
