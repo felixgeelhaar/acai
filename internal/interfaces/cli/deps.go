@@ -3,6 +3,7 @@
 package cli
 
 import (
+	"errors"
 	"io"
 	"net/http"
 
@@ -15,6 +16,10 @@ import (
 	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
 	mcpiface "github.com/felixgeelhaar/acai/internal/interfaces/mcp"
 )
+
+// errLocalDBRequired is returned when a write command is invoked but the
+// local database was not available at startup.
+var errLocalDBRequired = errors.New("this feature requires local storage (check ~/.acai/cache directory permissions)")
 
 // Dependencies holds all injected use cases for the CLI.
 // This is the composition root's way of providing dependencies
@@ -29,6 +34,7 @@ type Dependencies struct {
 	ExportMeeting     *exportapp.ExportMeeting
 	Login             *authapp.Login
 	CheckStatus       *authapp.CheckStatus
+	Logout            *authapp.Logout
 	ListWorkspaces    *workspaceapp.ListWorkspaces
 	GetWorkspace      *workspaceapp.GetWorkspace
 	EventDispatcher   domain.EventDispatcher
@@ -36,13 +42,16 @@ type Dependencies struct {
 	MCPServer         *mcpiface.Server
 	Out               io.Writer
 
-	// Write use cases (Phase 3)
+	// Write use cases
 	AddNote            *annotationapp.AddNote
 	ListNotes          *annotationapp.ListNotes
 	DeleteNote         *annotationapp.DeleteNote
 	CompleteActionItem *meetingapp.CompleteActionItem
 	UpdateActionItem   *meetingapp.UpdateActionItem
 
-	// Embedding export (Phase 3)
+	// Embedding export
 	ExportEmbeddings *embeddingapp.ExportEmbeddings
+
+	// Config-provided API token for auth login
+	GranolaAPIToken string
 }

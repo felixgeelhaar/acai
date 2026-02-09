@@ -13,8 +13,12 @@ import (
 	domain "github.com/felixgeelhaar/acai/internal/domain/auth"
 )
 
+// credentialFileVersion is the current credential file format version.
+const credentialFileVersion = "1"
+
 // tokenFile is the stored credential format.
 type tokenFile struct {
+	Version      string    `json:"version"`
 	Method       string    `json:"method"`
 	AccessToken  string    `json:"access_token"`
 	RefreshToken string    `json:"refresh_token"`
@@ -37,6 +41,7 @@ func (s *FileTokenStore) Save(_ context.Context, cred domain.Credential) error {
 	}
 
 	f := tokenFile{
+		Version:      credentialFileVersion,
 		Method:       string(cred.Method()),
 		AccessToken:  cred.Token().AccessToken(),
 		RefreshToken: cred.Token().RefreshToken(),

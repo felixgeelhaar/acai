@@ -2,6 +2,8 @@ package outbox
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"time"
 
@@ -39,10 +41,14 @@ func (d *Dispatcher) Dispatch(ctx context.Context, events []domain.DomainEvent) 
 	// Persist write events to outbox
 	for _, event := range events {
 		if writeEventTypes[event.EventName()] {
+			payload, err := MarshalEventPayload(event)
+			if err != nil {
+				return fmt.Errorf("outbox marshal %s: %w", event.EventName(), err)
+			}
 			entry := Entry{
-				ID:        fmt.Sprintf("%s-%d", event.EventName(), time.Now().UnixNano()),
+				ID:        generateEntryID(event.EventName()),
 				EventType: event.EventName(),
-				Payload:   MarshalEventPayload(event),
+				Payload:   payload,
 				CreatedAt: event.OccurredAt(),
 			}
 			if err := d.store.Append(entry); err != nil {
@@ -51,6 +57,14 @@ func (d *Dispatcher) Dispatch(ctx context.Context, events []domain.DomainEvent) 
 		}
 	}
 	return nil
+}
+
+// generateEntryID produces a unique outbox entry ID using
+// the event name, timestamp, and random bytes to avoid collisions.
+func generateEntryID(eventName string) string {
+	var b [8]byte
+	_, _ = rand.Read(b[:])
+	return fmt.Sprintf("%s-%d-%s", eventName, time.Now().UnixNano(), hex.EncodeToString(b[:]))
 }
 
 var _ domain.EventDispatcher = (*Dispatcher)(nil)

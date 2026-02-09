@@ -10,9 +10,13 @@ import (
 )
 
 var (
-	ErrNotAuthenticated = errors.New("not authenticated")
-	ErrTokenExpired     = errors.New("token has expired")
-	ErrInvalidToken     = errors.New("invalid token")
+	ErrNotAuthenticated  = errors.New("not authenticated")
+	ErrTokenExpired      = errors.New("token has expired")
+	ErrInvalidToken      = errors.New("invalid token")
+	ErrOAuthNotSupported     = errors.New("OAuth login is not yet supported; use --method api_token with ACAI_GRANOLA_API_TOKEN")
+	ErrMissingAPIToken       = errors.New("API token is required: set ACAI_GRANOLA_API_TOKEN environment variable")
+	ErrInvalidAPIToken       = errors.New("API token appears invalid: token must be at least 10 characters")
+	ErrUnsupportedAuthMethod = errors.New("unsupported authentication method")
 )
 
 // AuthMethod represents how the user authenticates.
@@ -69,10 +73,16 @@ func (c *Credential) IsValid() bool {
 	return c.token.accessToken != "" && !c.token.IsExpired()
 }
 
+// LoginParams holds the parameters for a login request.
+type LoginParams struct {
+	Method   AuthMethod
+	APIToken string
+}
+
 // Service is the port for authentication operations.
 // Implemented in the infrastructure layer.
 type Service interface {
-	Login(ctx context.Context, method AuthMethod) (*Credential, error)
+	Login(ctx context.Context, params LoginParams) (*Credential, error)
 	Status(ctx context.Context) (*Credential, error)
 	Logout(ctx context.Context) error
 }

@@ -28,7 +28,7 @@ func newActionCompleteCmd(deps *Dependencies) *cobra.Command {
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if deps.CompleteActionItem == nil {
-				return fmt.Errorf("action item functionality not configured")
+				return errLocalDBRequired
 			}
 			out, err := deps.CompleteActionItem.Execute(cmd.Context(), meetingapp.CompleteActionItemInput{
 				MeetingID:    domain.MeetingID(args[0]),
@@ -50,7 +50,7 @@ func newActionUpdateCmd(deps *Dependencies) *cobra.Command {
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if deps.UpdateActionItem == nil {
-				return fmt.Errorf("action item functionality not configured")
+				return errLocalDBRequired
 			}
 			out, err := deps.UpdateActionItem.Execute(cmd.Context(), meetingapp.UpdateActionItemInput{
 				MeetingID:    domain.MeetingID(args[0]),

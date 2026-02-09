@@ -7,7 +7,8 @@ import (
 )
 
 type LoginInput struct {
-	Method domain.AuthMethod
+	Method   domain.AuthMethod
+	APIToken string
 }
 
 type LoginOutput struct {
@@ -23,7 +24,10 @@ func NewLogin(service domain.Service) *Login {
 }
 
 func (uc *Login) Execute(ctx context.Context, input LoginInput) (*LoginOutput, error) {
-	cred, err := uc.service.Login(ctx, input.Method)
+	cred, err := uc.service.Login(ctx, domain.LoginParams{
+		Method:   input.Method,
+		APIToken: input.APIToken,
+	})
 	if err != nil {
 		return nil, err
 	}

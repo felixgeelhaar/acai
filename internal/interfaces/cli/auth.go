@@ -16,6 +16,7 @@ func newAuthCmd(deps *Dependencies) *cobra.Command {
 
 	cmd.AddCommand(newAuthLoginCmd(deps))
 	cmd.AddCommand(newAuthStatusCmd(deps))
+	cmd.AddCommand(newAuthLogoutCmd(deps))
 
 	return cmd
 }
@@ -25,15 +26,24 @@ func newAuthLoginCmd(deps *Dependencies) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "login",
-		Short: "Authenticate with Granola",
+		Short: "Authenticate with Granola (requires ACAI_GRANOLA_API_TOKEN env var)",
+		Long: `Authenticate with Granola using an API token.
+
+Set the ACAI_GRANOLA_API_TOKEN environment variable before running this command.
+OAuth is not yet supported.
+
+Example:
+  export ACAI_GRANOLA_API_TOKEN=gra_xxxxx
+  acai auth login`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			authMethod := domain.AuthOAuth
-			if method == "api_token" {
-				authMethod = domain.AuthAPIToken
+			authMethod := domain.AuthAPIToken
+			if method == "oauth" {
+				authMethod = domain.AuthOAuth
 			}
 
 			out, err := deps.Login.Execute(cmd.Context(), authapp.LoginInput{
-				Method: authMethod,
+				Method:   authMethod,
+				APIToken: deps.GranolaAPIToken,
 			})
 			if err != nil {
 				return fmt.Errorf("login failed: %w", err)
@@ -44,9 +54,26 @@ func newAuthLoginCmd(deps *Dependencies) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&method, "method", "oauth", "Auth method: oauth or api_token")
+	cmd.Flags().StringVar(&method, "method", "api_token", "Auth method: api_token (oauth not yet supported)")
 
 	return cmd
+}
+
+func newAuthLogoutCmd(deps *Dependencies) *cobra.Command {
+	return &cobra.Command{
+		Use:   "logout",
+		Short: "Remove stored credentials",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if deps.Logout == nil {
+				return fmt.Errorf("logout not configured")
+			}
+			if err := deps.Logout.Execute(cmd.Context()); err != nil {
+				return fmt.Errorf("logout failed: %w", err)
+			}
+			_, _ = fmt.Fprintln(deps.Out, "Logged out successfully. Stored credentials have been removed.")
+			return nil
+		},
+	}
 }
 
 func newAuthStatusCmd(deps *Dependencies) *cobra.Command {

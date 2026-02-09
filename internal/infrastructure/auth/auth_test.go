@@ -72,17 +72,23 @@ func TestFileTokenStore_DeleteNonexistent(t *testing.T) {
 	}
 }
 
-func TestService_LoginAndStatus(t *testing.T) {
+func TestService_LoginAPIToken(t *testing.T) {
 	dir := t.TempDir()
 	store := infraauth.NewFileTokenStore(dir)
 	svc := infraauth.NewService(store)
 
-	cred, err := svc.Login(context.Background(), domain.AuthOAuth)
+	cred, err := svc.Login(context.Background(), domain.LoginParams{
+		Method:   domain.AuthAPIToken,
+		APIToken: "gra_test_token_123",
+	})
 	if err != nil {
 		t.Fatalf("login error: %v", err)
 	}
-	if cred.Method() != domain.AuthOAuth {
-		t.Errorf("got method %q", cred.Method())
+	if cred.Method() != domain.AuthAPIToken {
+		t.Errorf("got method %q, want %q", cred.Method(), domain.AuthAPIToken)
+	}
+	if cred.Token().AccessToken() != "gra_test_token_123" {
+		t.Errorf("got access token %q, want real token", cred.Token().AccessToken())
 	}
 
 	status, err := svc.Status(context.Background())
@@ -94,12 +100,42 @@ func TestService_LoginAndStatus(t *testing.T) {
 	}
 }
 
+func TestService_LoginAPIToken_EmptyToken(t *testing.T) {
+	dir := t.TempDir()
+	store := infraauth.NewFileTokenStore(dir)
+	svc := infraauth.NewService(store)
+
+	_, err := svc.Login(context.Background(), domain.LoginParams{
+		Method:   domain.AuthAPIToken,
+		APIToken: "",
+	})
+	if err != domain.ErrMissingAPIToken {
+		t.Errorf("got error %v, want %v", err, domain.ErrMissingAPIToken)
+	}
+}
+
+func TestService_LoginOAuth_NotSupported(t *testing.T) {
+	dir := t.TempDir()
+	store := infraauth.NewFileTokenStore(dir)
+	svc := infraauth.NewService(store)
+
+	_, err := svc.Login(context.Background(), domain.LoginParams{
+		Method: domain.AuthOAuth,
+	})
+	if err != domain.ErrOAuthNotSupported {
+		t.Errorf("got error %v, want %v", err, domain.ErrOAuthNotSupported)
+	}
+}
+
 func TestService_Logout(t *testing.T) {
 	dir := t.TempDir()
 	store := infraauth.NewFileTokenStore(dir)
 	svc := infraauth.NewService(store)
 
-	_, _ = svc.Login(context.Background(), domain.AuthOAuth)
+	_, _ = svc.Login(context.Background(), domain.LoginParams{
+		Method:   domain.AuthAPIToken,
+		APIToken: "gra_test_token",
+	})
 	if err := svc.Logout(context.Background()); err != nil {
 		t.Fatalf("logout error: %v", err)
 	}
@@ -107,6 +143,33 @@ func TestService_Logout(t *testing.T) {
 	_, err := svc.Status(context.Background())
 	if err != domain.ErrNotAuthenticated {
 		t.Errorf("expected not authenticated after logout, got: %v", err)
+	}
+}
+
+func TestService_LoginAPIToken_TooShort(t *testing.T) {
+	dir := t.TempDir()
+	store := infraauth.NewFileTokenStore(dir)
+	svc := infraauth.NewService(store)
+
+	_, err := svc.Login(context.Background(), domain.LoginParams{
+		Method:   domain.AuthAPIToken,
+		APIToken: "short",
+	})
+	if err != domain.ErrInvalidAPIToken {
+		t.Errorf("got error %v, want %v", err, domain.ErrInvalidAPIToken)
+	}
+}
+
+func TestService_LoginUnsupportedMethod(t *testing.T) {
+	dir := t.TempDir()
+	store := infraauth.NewFileTokenStore(dir)
+	svc := infraauth.NewService(store)
+
+	_, err := svc.Login(context.Background(), domain.LoginParams{
+		Method: domain.AuthMethod("saml"),
+	})
+	if err != domain.ErrUnsupportedAuthMethod {
+		t.Errorf("got error %v, want %v", err, domain.ErrUnsupportedAuthMethod)
 	}
 }
 

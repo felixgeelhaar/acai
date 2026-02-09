@@ -31,7 +31,7 @@ func newNoteAddCmd(deps *Dependencies) *cobra.Command {
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if deps.AddNote == nil {
-				return fmt.Errorf("note functionality not configured")
+				return errLocalDBRequired
 			}
 			out, err := deps.AddNote.Execute(cmd.Context(), annotationapp.AddNoteInput{
 				MeetingID: args[0],
@@ -57,7 +57,7 @@ func newNoteListCmd(deps *Dependencies) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if deps.ListNotes == nil {
-				return fmt.Errorf("note functionality not configured")
+				return errLocalDBRequired
 			}
 			out, err := deps.ListNotes.Execute(cmd.Context(), annotationapp.ListNotesInput{
 				MeetingID: args[0],
@@ -89,7 +89,7 @@ func newNoteDeleteCmd(deps *Dependencies) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if deps.DeleteNote == nil {
-				return fmt.Errorf("note functionality not configured")
+				return errLocalDBRequired
 			}
 			_, err := deps.DeleteNote.Execute(cmd.Context(), annotationapp.DeleteNoteInput{
 				NoteID: args[0],

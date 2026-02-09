@@ -15,7 +15,7 @@ type mockAuthService struct {
 	statusErr  error
 }
 
-func (m *mockAuthService) Login(_ context.Context, method domain.AuthMethod) (*domain.Credential, error) {
+func (m *mockAuthService) Login(_ context.Context, params domain.LoginParams) (*domain.Credential, error) {
 	if m.loginErr != nil {
 		return nil, m.loginErr
 	}
@@ -39,7 +39,10 @@ func TestLogin_Success(t *testing.T) {
 	svc := &mockAuthService{credential: cred}
 
 	uc := app.NewLogin(svc)
-	out, err := uc.Execute(context.Background(), app.LoginInput{Method: domain.AuthOAuth})
+	out, err := uc.Execute(context.Background(), app.LoginInput{
+		Method:   domain.AuthAPIToken,
+		APIToken: "gra_test",
+	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -52,7 +55,10 @@ func TestLogin_Error(t *testing.T) {
 	svc := &mockAuthService{loginErr: domain.ErrInvalidToken}
 
 	uc := app.NewLogin(svc)
-	_, err := uc.Execute(context.Background(), app.LoginInput{Method: domain.AuthOAuth})
+	_, err := uc.Execute(context.Background(), app.LoginInput{
+		Method:   domain.AuthAPIToken,
+		APIToken: "gra_test",
+	})
 	if err != domain.ErrInvalidToken {
 		t.Errorf("got error %v, want %v", err, domain.ErrInvalidToken)
 	}

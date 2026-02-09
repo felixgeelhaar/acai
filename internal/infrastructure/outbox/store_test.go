@@ -145,7 +145,10 @@ func TestSQLiteStore_MultiplePending(t *testing.T) {
 }
 
 func TestMarshalEventPayload(t *testing.T) {
-	data := outbox.MarshalEventPayload(map[string]string{"key": "val"})
+	data, err := outbox.MarshalEventPayload(map[string]string{"key": "val"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 	if string(data) != `{"key":"val"}` {
 		t.Errorf("got %q", string(data))
 	}

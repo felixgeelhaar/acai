@@ -5,6 +5,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -199,6 +200,39 @@ func TestHandler_NoSecret_SkipsSignatureValidation(t *testing.T) {
 
 	if w.Code != http.StatusOK {
 		t.Errorf("expected 200 without secret, got %d", w.Code)
+	}
+}
+
+func TestHandler_OversizedBody_Returns413(t *testing.T) {
+	repo := &mockRepo{}
+	d := &mockDispatcher{}
+	h := webhook.NewHandler(meetingapp.NewSyncMeetings(repo), d, "")
+
+	// Create a body larger than 1MB
+	largeBody := strings.Repeat("x", 1<<20+1)
+	req := httptest.NewRequest(http.MethodPost, "/webhook/granola", strings.NewReader(largeBody))
+	w := httptest.NewRecorder()
+
+	h.ServeHTTP(w, req)
+
+	if w.Code != http.StatusRequestEntityTooLarge {
+		t.Errorf("expected 413, got %d", w.Code)
+	}
+}
+
+func TestHandler_SyncFailure_Returns500(t *testing.T) {
+	repo := &mockRepo{err: errors.New("sync error")}
+	d := &mockDispatcher{}
+	h := webhook.NewHandler(meetingapp.NewSyncMeetings(repo), d, "")
+
+	body := `{"event":"meeting.created","meeting_id":"m-1","timestamp":"2026-01-01T00:00:00Z"}`
+	req := httptest.NewRequest(http.MethodPost, "/webhook/granola", strings.NewReader(body))
+	w := httptest.NewRecorder()
+
+	h.ServeHTTP(w, req)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("expected 500, got %d", w.Code)
 	}
 }
 

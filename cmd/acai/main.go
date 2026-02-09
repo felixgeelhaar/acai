@@ -93,7 +93,11 @@ func main() {
 	}
 
 	// Auth infrastructure
-	homeDir, _ := os.UserHomeDir()
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Warning: cannot determine home directory: %v, using temp dir\n", err)
+		homeDir = os.TempDir()
+	}
 	tokenStore := infraauth.NewFileTokenStore(homeDir + "/.acai")
 	authService := infraauth.NewService(tokenStore)
 
@@ -114,6 +118,7 @@ func main() {
 	localDB, err := sql.Open("sqlite3", localDBPath)
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "Warning: cannot open local store: %v\n", err)
+		localDB = nil
 	} else {
 		defer func() { _ = localDB.Close() }()
 		if err := localstore.InitSchema(localDB); err != nil {
@@ -121,14 +126,21 @@ func main() {
 		}
 	}
 
-	// Local store repositories
-	noteRepo := localstore.NewNoteRepository(localDB)
-	writeRepo := localstore.NewWriteRepository(localDB)
+	// Local store repositories (guarded against nil db)
+	var noteRepo *localstore.NoteRepository
+	var writeRepo *localstore.WriteRepository
+	if localDB != nil {
+		noteRepo = localstore.NewNoteRepository(localDB)
+		writeRepo = localstore.NewWriteRepository(localDB)
+	}
 
 	// Event infrastructure: inner dispatcher → outbox decorator
 	innerDispatcher := events.NewDispatcher(nil) // notifier wired after MCP server creation
-	outboxStore := outbox.NewSQLiteStore(localDB)
-	var dispatcher domain.EventDispatcher = outbox.NewDispatcher(innerDispatcher, outboxStore)
+	var dispatcher domain.EventDispatcher = innerDispatcher
+	if localDB != nil {
+		outboxStore := outbox.NewSQLiteStore(localDB)
+		dispatcher = outbox.NewDispatcher(innerDispatcher, outboxStore)
+	}
 
 	// --- Application Layer (Use Cases) ---
 
@@ -142,16 +154,25 @@ func main() {
 	exportMeeting := exportapp.NewExportMeeting(repo)
 	login := authapp.NewLogin(authService)
 	checkStatus := authapp.NewCheckStatus(authService)
+	logout := authapp.NewLogout(authService)
 	listWorkspaces := workspaceapp.NewListWorkspaces(wsRepo)
 	getWorkspace := workspaceapp.NewGetWorkspace(wsRepo)
 
-	// Write use cases (Phase 3)
-	addNote := annotationapp.NewAddNote(noteRepo, repo, dispatcher)
-	listNotes := annotationapp.NewListNotes(noteRepo)
-	deleteNote := annotationapp.NewDeleteNote(noteRepo, dispatcher)
-	completeActionItem := meetingapp.NewCompleteActionItem(repo, writeRepo, dispatcher)
-	updateActionItem := meetingapp.NewUpdateActionItem(repo, writeRepo, dispatcher)
-	exportEmbeddings := embeddingapp.NewExportEmbeddings(repo, noteRepo)
+	// Write use cases (require local DB)
+	var addNote *annotationapp.AddNote
+	var listNotes *annotationapp.ListNotes
+	var deleteNote *annotationapp.DeleteNote
+	var completeActionItem *meetingapp.CompleteActionItem
+	var updateActionItem *meetingapp.UpdateActionItem
+	var exportEmbeddings *embeddingapp.ExportEmbeddings
+	if localDB != nil {
+		addNote = annotationapp.NewAddNote(noteRepo, repo, dispatcher)
+		listNotes = annotationapp.NewListNotes(noteRepo)
+		deleteNote = annotationapp.NewDeleteNote(noteRepo, dispatcher)
+		completeActionItem = meetingapp.NewCompleteActionItem(repo, writeRepo, dispatcher)
+		updateActionItem = meetingapp.NewUpdateActionItem(repo, writeRepo, dispatcher)
+		exportEmbeddings = embeddingapp.NewExportEmbeddings(repo, noteRepo)
+	}
 
 	// --- Interfaces Layer ---
 
@@ -173,7 +194,9 @@ func main() {
 		ExportEmbeddings:   exportEmbeddings,
 	})
 
-	// Policy middleware (wraps MCP server if policy file is configured)
+	// Policy middleware (wraps MCP server if policy file is configured).
+	// TODO: integrate policy middleware into the MCP request pipeline;
+	// currently constructed but not wired into the serving path.
 	if cfg.Policy.Enabled && cfg.Policy.FilePath != "" {
 		loadResult, policyErr := infraPolicy.LoadFromFile(cfg.Policy.FilePath)
 		if policyErr != nil {
@@ -195,6 +218,7 @@ func main() {
 		ExportMeeting:      exportMeeting,
 		Login:              login,
 		CheckStatus:        checkStatus,
+		Logout:             logout,
 		ListWorkspaces:     listWorkspaces,
 		GetWorkspace:       getWorkspace,
 		EventDispatcher:    dispatcher,
@@ -205,6 +229,7 @@ func main() {
 		CompleteActionItem: completeActionItem,
 		UpdateActionItem:   updateActionItem,
 		ExportEmbeddings:   exportEmbeddings,
+		GranolaAPIToken:    cfg.Granola.APIToken,
 		Out:                os.Stdout,
 	}
 

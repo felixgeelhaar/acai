@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	meetingapp "github.com/felixgeelhaar/acai/internal/application/meeting"
 	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
 	"github.com/felixgeelhaar/acai/internal/domain/workspace"
 	mcpiface "github.com/felixgeelhaar/acai/internal/interfaces/mcp"
@@ -421,7 +422,7 @@ func TestServer_ServeHTTP_WithWebhookRoute(t *testing.T) {
 	}
 }
 
-// --- Write Tool Tests (Phase 3) ---
+// --- Write Tool Tests ---
 
 func TestServer_HandleAddNote(t *testing.T) {
 	repo := newMockRepo()
@@ -662,6 +663,43 @@ func TestServer_HandleToolJSON_ExportEmbeddings(t *testing.T) {
 	}
 	if result.ChunkCount < 1 {
 		t.Errorf("expected at least 1 chunk, got %d", result.ChunkCount)
+	}
+}
+
+func TestServer_HandleToolJSON_WriteTools_NilUseCases(t *testing.T) {
+	repo := newMockRepo()
+	repo.addMeeting(mustMeeting(t, "m-1", "Meeting"))
+
+	// Create server with only read use cases — write use cases are nil.
+	srv := mcpiface.NewServer("acai", "test", mcpiface.ServerOptions{
+		ListMeetings:      meetingapp.NewListMeetings(repo),
+		GetMeeting:        meetingapp.NewGetMeeting(repo),
+		GetTranscript:     meetingapp.NewGetTranscript(repo),
+		SearchTranscripts: meetingapp.NewSearchTranscripts(repo),
+		GetActionItems:    meetingapp.NewGetActionItems(repo),
+		GetMeetingStats:   meetingapp.NewGetMeetingStats(repo),
+	})
+
+	writeTools := []struct {
+		name  string
+		input string
+	}{
+		{"add_note", `{"meeting_id":"m-1","author":"claude","content":"note"}`},
+		{"list_notes", `{"meeting_id":"m-1"}`},
+		{"delete_note", `{"note_id":"n-1"}`},
+		{"complete_action_item", `{"meeting_id":"m-1","action_item_id":"ai-1"}`},
+		{"update_action_item", `{"meeting_id":"m-1","action_item_id":"ai-1","text":"new"}`},
+		{"export_embeddings", `{"meeting_ids":["m-1"]}`},
+	}
+
+	for _, tc := range writeTools {
+		_, err := srv.HandleToolJSON(context.Background(), tc.name, json.RawMessage(tc.input))
+		if err == nil {
+			t.Errorf("tool %q: expected errToolNotAvailable, got nil", tc.name)
+		}
+		if err != nil && err.Error() != "tool not available: local database is not configured" {
+			t.Errorf("tool %q: got error %q, want errToolNotAvailable", tc.name, err)
+		}
 	}
 }
 

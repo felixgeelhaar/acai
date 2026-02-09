@@ -8,6 +8,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"log"
 	"time"
 
 	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
@@ -53,11 +54,12 @@ func (r *CachedRepository) get(key string) ([]byte, bool) {
 	return data, true
 }
 
-func (r *CachedRepository) set(key string, value []byte) {
-	_, _ = r.db.Exec(
+func (r *CachedRepository) set(key string, value []byte) error {
+	_, err := r.db.Exec(
 		"INSERT OR REPLACE INTO cache_entries (key, value, expires_at) VALUES (?, ?, ?)",
 		key, value, time.Now().UTC().Add(r.ttl),
 	)
+	return err
 }
 
 // Evict removes expired entries from the cache.
@@ -103,7 +105,9 @@ func (r *CachedRepository) FindByID(ctx context.Context, id domain.MeetingID) (*
 	}
 
 	if data, marshalErr := json.Marshal(toMeetingCacheEntry(m)); marshalErr == nil {
-		r.set(cacheKey, data)
+		if setErr := r.set(cacheKey, data); setErr != nil {
+			log.Printf("cache: write failed for %s: %v", cacheKey, setErr)
+		}
 	}
 	return m, nil
 }
@@ -137,7 +141,9 @@ func (r *CachedRepository) Sync(ctx context.Context, since *time.Time) ([]domain
 	// Invalidate cache for any meetings referenced in events.
 	for _, e := range events {
 		if mc, ok := e.(domain.MeetingCreated); ok {
-			_, _ = r.db.Exec("DELETE FROM cache_entries WHERE key = ?", "meeting:"+string(mc.MeetingID()))
+			if _, delErr := r.db.Exec("DELETE FROM cache_entries WHERE key = ?", "meeting:"+string(mc.MeetingID())); delErr != nil {
+				log.Printf("cache: invalidation failed for meeting:%s: %v", mc.MeetingID(), delErr)
+			}
 		}
 	}
 	return events, nil

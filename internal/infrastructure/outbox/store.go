@@ -94,10 +94,9 @@ func (s *SQLiteStore) MarkFailed(id string) error {
 	return err
 }
 
-// MarshalEventPayload is a helper to serialize event data to JSON.
-func MarshalEventPayload(v any) []byte {
-	data, _ := json.Marshal(v)
-	return data
+// MarshalEventPayload serializes event data to JSON.
+func MarshalEventPayload(v any) ([]byte, error) {
+	return json.Marshal(v)
 }
 
 var _ Store = (*SQLiteStore)(nil)

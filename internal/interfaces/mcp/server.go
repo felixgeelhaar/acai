@@ -32,14 +32,14 @@ type ServerOptions struct {
 	ListWorkspaces    *workspaceapp.ListWorkspaces
 	GetWorkspace      *workspaceapp.GetWorkspace
 
-	// Write use cases (Phase 3)
+	// Write use cases
 	AddNote            *annotationapp.AddNote
 	ListNotes          *annotationapp.ListNotes
 	DeleteNote         *annotationapp.DeleteNote
 	CompleteActionItem *meetingapp.CompleteActionItem
 	UpdateActionItem   *meetingapp.UpdateActionItem
 
-	// Embedding export (Phase 3)
+	// Embedding export
 	ExportEmbeddings *embeddingapp.ExportEmbeddings
 }
 
@@ -57,14 +57,14 @@ type Server struct {
 	listWorkspaces    *workspaceapp.ListWorkspaces
 	getWorkspace      *workspaceapp.GetWorkspace
 
-	// Write use cases (Phase 3)
+	// Write use cases
 	addNote            *annotationapp.AddNote
 	listNotes          *annotationapp.ListNotes
 	deleteNote         *annotationapp.DeleteNote
 	completeActionItem *meetingapp.CompleteActionItem
 	updateActionItem   *meetingapp.UpdateActionItem
 
-	// Embedding export (Phase 3)
+	// Embedding export
 	exportEmbeddings *embeddingapp.ExportEmbeddings
 
 	name    string
@@ -124,7 +124,12 @@ func (s *Server) ServeHTTP(ctx context.Context, addr string, extraRoutes func(mu
 	mux.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		_, _ = fmt.Fprintf(w, `{"status":"ok","server":"%s","version":"%s"}`, s.name, s.version)
+		resp := struct {
+			Status  string `json:"status"`
+			Server  string `json:"server"`
+			Version string `json:"version"`
+		}{Status: "ok", Server: s.name, Version: s.version}
+		_ = json.NewEncoder(w).Encode(resp)
 	})
 
 	if extraRoutes != nil {
@@ -132,8 +137,11 @@ func (s *Server) ServeHTTP(ctx context.Context, addr string, extraRoutes func(mu
 	}
 
 	srv := &http.Server{
-		Addr:    addr,
-		Handler: mux,
+		Addr:         addr,
+		Handler:      mux,
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 60 * time.Second,
+		IdleTimeout:  120 * time.Second,
 	}
 
 	errCh := make(chan error, 1)
@@ -169,6 +177,8 @@ func (s *Server) registerTools(srv *mcpfw.Server) {
 		Description("Get the transcript for a meeting").
 		Handler(s.HandleGetTranscript)
 
+	// NOTE: SearchTranscripts currently falls back to local filtering because
+	// the Granola API does not expose a search endpoint.
 	srv.Tool("search_transcripts").
 		Description("Full-text search across all meeting transcripts").
 		Handler(s.HandleSearchTranscripts)
@@ -188,7 +198,7 @@ func (s *Server) registerTools(srv *mcpfw.Server) {
 			Handler(s.HandleListWorkspaces)
 	}
 
-	// Write tools (Phase 3)
+	// Write tools
 	if s.addNote != nil {
 		srv.Tool("add_note").
 			Description("Add an agent note to a meeting").
@@ -237,7 +247,10 @@ func (s *Server) registerResources(srv *mcpfw.Server) {
 				return nil, err
 			}
 			result := toMeetingDetailResult(out.Meeting)
-			data, _ := json.Marshal(result)
+			data, err := json.Marshal(result)
+			if err != nil {
+				return nil, fmt.Errorf("marshal meeting resource: %w", err)
+			}
 			return &mcpfw.ResourceContent{
 				URI:      uri,
 				MimeType: "application/json",
@@ -270,7 +283,10 @@ func (s *Server) registerResources(srv *mcpfw.Server) {
 				return nil, err
 			}
 			result := toTranscriptResult(out.Transcript)
-			data, _ := json.Marshal(result)
+			data, err := json.Marshal(result)
+			if err != nil {
+				return nil, fmt.Errorf("marshal transcript resource: %w", err)
+			}
 			return &mcpfw.ResourceContent{
 				URI:      uri,
 				MimeType: "application/json",
@@ -295,7 +311,10 @@ func (s *Server) registerResources(srv *mcpfw.Server) {
 				for i, n := range out.Notes {
 					results[i] = toNoteResult(n)
 				}
-				data, _ := json.Marshal(results)
+				data, err := json.Marshal(results)
+				if err != nil {
+					return nil, fmt.Errorf("marshal notes resource: %w", err)
+				}
 				return &mcpfw.ResourceContent{
 					URI:      uri,
 					MimeType: "application/json",
@@ -318,7 +337,10 @@ func (s *Server) registerResources(srv *mcpfw.Server) {
 					return nil, err
 				}
 				result := toWorkspaceResult(out.Workspace)
-				data, _ := json.Marshal(result)
+				data, err := json.Marshal(result)
+				if err != nil {
+					return nil, fmt.Errorf("marshal workspace resource: %w", err)
+				}
 				return &mcpfw.ResourceContent{
 					URI:      uri,
 					MimeType: "application/json",
@@ -838,7 +860,7 @@ type ExportEmbeddingsResult struct {
 	Format     string `json:"format"`
 }
 
-// --- Write Tool Input Types (Phase 3) ---
+// --- Write Tool Input Types ---
 
 type AddNoteToolInput struct {
 	MeetingID string `json:"meeting_id"`
@@ -885,9 +907,16 @@ func toNoteResult(n *annotation.AgentNote) NoteResult {
 	}
 }
 
+// errToolNotAvailable is returned when a write tool is invoked but
+// the backing use case was not configured (e.g., local database unavailable).
+var errToolNotAvailable = fmt.Errorf("tool not available: local database is not configured")
+
 // --- Write Tool Handlers ---
 
 func (s *Server) HandleAddNote(ctx context.Context, input AddNoteToolInput) (*NoteResult, error) {
+	if s.addNote == nil {
+		return nil, errToolNotAvailable
+	}
 	out, err := s.addNote.Execute(ctx, annotationapp.AddNoteInput{
 		MeetingID: input.MeetingID,
 		Author:    input.Author,
@@ -901,6 +930,9 @@ func (s *Server) HandleAddNote(ctx context.Context, input AddNoteToolInput) (*No
 }
 
 func (s *Server) HandleListNotes(ctx context.Context, input ListNotesToolInput) ([]NoteResult, error) {
+	if s.listNotes == nil {
+		return nil, errToolNotAvailable
+	}
 	out, err := s.listNotes.Execute(ctx, annotationapp.ListNotesInput{
 		MeetingID: input.MeetingID,
 	})
@@ -915,6 +947,9 @@ func (s *Server) HandleListNotes(ctx context.Context, input ListNotesToolInput) 
 }
 
 func (s *Server) HandleDeleteNote(ctx context.Context, input DeleteNoteToolInput) (*struct{}, error) {
+	if s.deleteNote == nil {
+		return nil, errToolNotAvailable
+	}
 	_, err := s.deleteNote.Execute(ctx, annotationapp.DeleteNoteInput{
 		NoteID: input.NoteID,
 	})
@@ -925,6 +960,9 @@ func (s *Server) HandleDeleteNote(ctx context.Context, input DeleteNoteToolInput
 }
 
 func (s *Server) HandleCompleteActionItem(ctx context.Context, input CompleteActionItemToolInput) (*ActionItemResult, error) {
+	if s.completeActionItem == nil {
+		return nil, errToolNotAvailable
+	}
 	out, err := s.completeActionItem.Execute(ctx, meetingapp.CompleteActionItemInput{
 		MeetingID:    domain.MeetingID(input.MeetingID),
 		ActionItemID: domain.ActionItemID(input.ActionItemID),
@@ -937,6 +975,9 @@ func (s *Server) HandleCompleteActionItem(ctx context.Context, input CompleteAct
 }
 
 func (s *Server) HandleUpdateActionItem(ctx context.Context, input UpdateActionItemToolInput) (*ActionItemResult, error) {
+	if s.updateActionItem == nil {
+		return nil, errToolNotAvailable
+	}
 	out, err := s.updateActionItem.Execute(ctx, meetingapp.UpdateActionItemInput{
 		MeetingID:    domain.MeetingID(input.MeetingID),
 		ActionItemID: domain.ActionItemID(input.ActionItemID),
@@ -950,6 +991,9 @@ func (s *Server) HandleUpdateActionItem(ctx context.Context, input UpdateActionI
 }
 
 func (s *Server) HandleExportEmbeddings(ctx context.Context, input ExportEmbeddingsToolInput) (*ExportEmbeddingsResult, error) {
+	if s.exportEmbeddings == nil {
+		return nil, errToolNotAvailable
+	}
 	meetingIDs := make([]domain.MeetingID, len(input.MeetingIDs))
 	for i, id := range input.MeetingIDs {
 		meetingIDs[i] = domain.MeetingID(id)

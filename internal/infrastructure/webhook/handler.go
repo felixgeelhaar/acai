@@ -30,6 +30,9 @@ func NewHandler(syncUC *meetingapp.SyncMeetings, dispatcher domain.EventDispatch
 	}
 }
 
+// maxWebhookBodySize is the maximum allowed webhook request body (1 MB).
+const maxWebhookBodySize = 1 << 20
+
 // ServeHTTP handles incoming webhook requests.
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -37,12 +40,18 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body, err := io.ReadAll(r.Body)
+	// Read up to maxWebhookBodySize+1 to detect oversized payloads.
+	body, err := io.ReadAll(io.LimitReader(r.Body, maxWebhookBodySize+1))
 	if err != nil {
 		http.Error(w, "failed to read body", http.StatusBadRequest)
 		return
 	}
 	defer func() { _ = r.Body.Close() }()
+
+	if len(body) > maxWebhookBodySize {
+		http.Error(w, "request body too large", http.StatusRequestEntityTooLarge)
+		return
+	}
 
 	if h.secret != "" {
 		sig := r.Header.Get("X-Granola-Signature")
@@ -60,7 +69,11 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	switch payload.Event {
 	case "meeting.created", "transcript.ready":
-		h.handleSync(r, payload)
+		if err := h.handleSync(r, payload); err != nil {
+			log.Printf("webhook: %s handling failed: %v", payload.Event, err)
+			http.Error(w, "sync failed", http.StatusInternalServerError)
+			return
+		}
 	default:
 		// Unknown event types are accepted but not processed
 	}
@@ -68,12 +81,11 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (h *Handler) handleSync(r *http.Request, payload GranolaWebhookPayload) {
+func (h *Handler) handleSync(r *http.Request, payload GranolaWebhookPayload) error {
 	since := payload.Timestamp
 	out, err := h.syncUC.Execute(r.Context(), meetingapp.SyncMeetingsInput{Since: &since})
 	if err != nil {
-		log.Printf("webhook: sync failed for %s: %v", payload.Event, err)
-		return
+		return err
 	}
 
 	if len(out.Events) > 0 && h.dispatcher != nil {
@@ -81,6 +93,7 @@ func (h *Handler) handleSync(r *http.Request, payload GranolaWebhookPayload) {
 			log.Printf("webhook: dispatch failed: %v", err)
 		}
 	}
+	return nil
 }
 
 func (h *Handler) validSignature(body []byte, signature string) bool {

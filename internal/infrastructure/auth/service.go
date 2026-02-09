@@ -23,18 +23,28 @@ func NewService(store TokenStore) *Service {
 	return &Service{store: store}
 }
 
-func (s *Service) Login(ctx context.Context, method domain.AuthMethod) (*domain.Credential, error) {
-	// For API token auth, the token is pre-configured.
-	// For OAuth, a browser flow would be triggered here.
-	// This is a placeholder — the real OAuth flow will be added in Phase 1.
-	token := domain.NewToken("placeholder", "", time.Now().Add(24*time.Hour).UTC())
-	cred := domain.NewCredential(method, token, "default")
+func (s *Service) Login(ctx context.Context, params domain.LoginParams) (*domain.Credential, error) {
+	switch params.Method {
+	case domain.AuthAPIToken:
+		if params.APIToken == "" {
+			return nil, domain.ErrMissingAPIToken
+		}
+		if len(params.APIToken) < 10 {
+			return nil, domain.ErrInvalidAPIToken
+		}
+		token := domain.NewToken(params.APIToken, "", time.Now().Add(365*24*time.Hour).UTC())
+		cred := domain.NewCredential(domain.AuthAPIToken, token, "default")
+		if err := s.store.Save(ctx, *cred); err != nil {
+			return nil, err
+		}
+		return cred, nil
 
-	if err := s.store.Save(ctx, *cred); err != nil {
-		return nil, err
+	case domain.AuthOAuth:
+		return nil, domain.ErrOAuthNotSupported
+
+	default:
+		return nil, domain.ErrUnsupportedAuthMethod
 	}
-
-	return cred, nil
 }
 
 func (s *Service) Status(ctx context.Context) (*domain.Credential, error) {

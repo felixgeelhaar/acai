@@ -162,13 +162,46 @@ func TestWorkspaceListCmd_WithWorkspaces(t *testing.T) {
 	}
 }
 
+func TestAuthLogoutCmd(t *testing.T) {
+	deps := testDeps(t)
+	root := cli.NewRootCmd(deps)
+
+	root.SetArgs([]string{"auth", "logout"})
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	output := deps.Out.(*bytes.Buffer).String()
+	if !strings.Contains(output, "Logged out successfully") {
+		t.Errorf("expected logout message, got: %q", output)
+	}
+}
+
+func TestAuthLoginCmd_DefaultMethodIsAPIToken(t *testing.T) {
+	deps := testDeps(t)
+	root := cli.NewRootCmd(deps)
+
+	// Find the login command and check its --method flag default
+	authCmd, _, _ := root.Find([]string{"auth", "login"})
+	if authCmd == nil {
+		t.Fatal("auth login command not found")
+	}
+	flag := authCmd.Flags().Lookup("method")
+	if flag == nil {
+		t.Fatal("--method flag not found")
+	}
+	if flag.DefValue != "api_token" {
+		t.Errorf("expected default method 'api_token', got %q", flag.DefValue)
+	}
+}
+
 // --- Test Helpers ---
 
 type mockAuthService struct{}
 
-func (m *mockAuthService) Login(_ context.Context, method domainauth.AuthMethod) (*domainauth.Credential, error) {
+func (m *mockAuthService) Login(_ context.Context, params domainauth.LoginParams) (*domainauth.Credential, error) {
 	token := domainauth.NewToken("test", "test", time.Now().Add(1*time.Hour).UTC())
-	return domainauth.NewCredential(method, token, "test-ws"), nil
+	return domainauth.NewCredential(params.Method, token, "test-ws"), nil
 }
 func (m *mockAuthService) Status(_ context.Context) (*domainauth.Credential, error) {
 	return nil, domainauth.ErrNotAuthenticated
@@ -284,6 +317,7 @@ func testDeps(t *testing.T) *cli.Dependencies {
 		ExportMeeting:     exportapp.NewExportMeeting(repo),
 		Login:             authapp.NewLogin(authSvc),
 		CheckStatus:       authapp.NewCheckStatus(authSvc),
+		Logout:            authapp.NewLogout(authSvc),
 		ListWorkspaces:    workspaceapp.NewListWorkspaces(wsRepo),
 		GetWorkspace:      workspaceapp.NewGetWorkspace(wsRepo),
 		AddNote:           annotationapp.NewAddNote(noteRepo, repo, dispatcher),

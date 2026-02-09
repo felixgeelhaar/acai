@@ -131,7 +131,10 @@ func Load() *Config {
 }
 
 func Default() *Config {
-	homeDir, _ := os.UserHomeDir()
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		homeDir = os.TempDir()
+	}
 	return &Config{
 		Granola: GranolaConfig{
 			APIURL:     "https://api.granola.ai",
