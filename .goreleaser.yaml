@@ -55,6 +55,7 @@ brews:
       owner: felixgeelhaar
       name: homebrew-tap
       token: "{{ .Env.GITHUB_TOKEN }}"
+    directory: Formula
     name: acai
     homepage: "https://github.com/felixgeelhaar/acai"
     description: "Go CLI and MCP server for Granola meeting intelligence"
