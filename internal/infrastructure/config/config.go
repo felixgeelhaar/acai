@@ -21,9 +21,11 @@ type Config struct {
 }
 
 type GranolaConfig struct {
-	APIURL     string
-	AuthMethod string
-	APIToken   string
+	APIURL         string
+	AuthMethod     string
+	APIToken       string
+	DataSource     string // "auto" (default), "api", "local_cache"
+	LocalCachePath string // override path to cache-v3.json
 }
 
 type MCPConfig struct {
@@ -88,11 +90,57 @@ type LoggingConfig struct {
 func Load() *Config {
 	cfg := Default()
 
+	// Layer 2: config file (if exists)
+	if path, err := DefaultConfigPath(); err == nil {
+		applyFileConfig(cfg, path)
+	}
+
+	// Layer 3: env vars (highest priority)
+	applyEnvOverrides(cfg)
+
+	return cfg
+}
+
+// DefaultConfigPath returns the path to the default config file (~/.acai/config.yaml).
+func DefaultConfigPath() (string, error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(homeDir, ".acai", "config.yaml"), nil
+}
+
+// applyFileConfig reads the YAML config file and overlays non-empty fields onto cfg.
+func applyFileConfig(cfg *Config, path string) {
+	fileCfg, err := ReadConfigFile(path)
+	if err != nil {
+		return
+	}
+
+	if fileCfg.DataSource != "" {
+		cfg.Granola.DataSource = fileCfg.DataSource
+	}
+	if fileCfg.Granola.APIURL != "" {
+		cfg.Granola.APIURL = fileCfg.Granola.APIURL
+	}
+	if fileCfg.Granola.CachePath != "" {
+		cfg.Granola.LocalCachePath = fileCfg.Granola.CachePath
+	}
+}
+
+// applyEnvOverrides applies environment variable overrides to cfg.
+func applyEnvOverrides(cfg *Config) {
 	if v := os.Getenv("ACAI_GRANOLA_API_URL"); v != "" {
 		cfg.Granola.APIURL = v
 	}
 	if v := os.Getenv("ACAI_GRANOLA_API_TOKEN"); v != "" {
 		cfg.Granola.APIToken = v
+	}
+	if v := os.Getenv("ACAI_DATA_SOURCE"); v != "" {
+		cfg.Granola.DataSource = v
+	}
+	if v := os.Getenv("ACAI_GRANOLA_CACHE_PATH"); v != "" {
+		cfg.Granola.LocalCachePath = v
 	}
 	if v := os.Getenv("ACAI_MCP_TRANSPORT"); v != "" {
 		cfg.MCP.Transport = v
@@ -117,8 +165,6 @@ func Load() *Config {
 		cfg.Policy.FilePath = v
 		cfg.Policy.Enabled = true
 	}
-
-	return cfg
 }
 
 func Default() *Config {
@@ -130,6 +176,7 @@ func Default() *Config {
 		Granola: GranolaConfig{
 			APIURL:     "https://public-api.granola.ai",
 			AuthMethod: "api_token",
+			DataSource: "auto",
 		},
 		MCP: MCPConfig{
 			ServerName: "acai",

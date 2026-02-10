@@ -21,6 +21,7 @@ func NewRootCmd(deps *Dependencies) *cobra.Command {
 	root.PersistentFlags().BoolVar(&flagVerbose, "verbose", false, "Enable debug logging")
 
 	root.AddCommand(
+		newInitCmd(),
 		newAuthCmd(deps),
 		newSyncCmd(deps),
 		newListCmd(deps),

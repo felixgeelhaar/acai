@@ -22,6 +22,7 @@ import (
 	"github.com/felixgeelhaar/acai/internal/infrastructure/config"
 	"github.com/felixgeelhaar/acai/internal/infrastructure/events"
 	"github.com/felixgeelhaar/acai/internal/infrastructure/granola"
+	"github.com/felixgeelhaar/acai/internal/infrastructure/localcache"
 	"github.com/felixgeelhaar/acai/internal/infrastructure/localstore"
 	"github.com/felixgeelhaar/acai/internal/infrastructure/outbox"
 	infraPolicy "github.com/felixgeelhaar/acai/internal/infrastructure/policy"
@@ -48,49 +49,6 @@ func main() {
 
 	// --- Infrastructure Layer ---
 
-	// HTTP client for Granola API
-	httpClient := &http.Client{Timeout: cfg.Resilience.Timeout}
-
-	// Granola API client (anti-corruption layer)
-	granolaClient := granola.NewClient(cfg.Granola.APIURL, httpClient, cfg.Granola.APIToken)
-
-	// Repository: Granola API → domain.Repository
-	granolaRepo := granola.NewRepository(granolaClient)
-
-	// Resilience decorator (circuit breaker, timeout, retry, rate limit)
-	resilientRepo := resilience.NewResilientRepository(granolaRepo, resilience.Config{
-		Timeout:          cfg.Resilience.Timeout,
-		MaxRetries:       cfg.Resilience.Retry.MaxAttempts,
-		RetryDelay:       cfg.Resilience.Retry.InitialDelay,
-		RetryMaxDelay:    cfg.Resilience.Retry.MaxDelay,
-		FailureThreshold: cfg.Resilience.CircuitBreaker.FailureThreshold,
-		SuccessThreshold: cfg.Resilience.CircuitBreaker.SuccessThreshold,
-		HalfOpenTimeout:  cfg.Resilience.CircuitBreaker.HalfOpenTimeout,
-		RateLimit:        cfg.Resilience.RateLimit.Rate,
-		RateBurst:        cfg.Resilience.RateLimit.Rate * 2,
-		RateInterval:     cfg.Resilience.RateLimit.Interval,
-	})
-	defer func() { _ = resilientRepo.Close() }()
-
-	// Cache decorator (SQLite local cache)
-	var repo domain.Repository = resilientRepo
-	if cfg.Cache.Enabled {
-		cacheDir := cfg.Cache.Dir
-		if err := os.MkdirAll(cacheDir, 0o700); err != nil {
-			_, _ = fmt.Fprintf(os.Stderr, "Warning: cannot create cache dir: %v\n", err)
-		} else {
-			dbPath := filepath.Join(cacheDir, "cache.db")
-			db, err := sql.Open("sqlite3", dbPath)
-			if err == nil {
-				cachedRepo, cacheErr := cache.NewCachedRepository(resilientRepo, db, cfg.Cache.TTL)
-				if cacheErr == nil {
-					repo = cachedRepo
-					defer func() { _ = db.Close() }()
-				}
-			}
-		}
-	}
-
 	// Auth infrastructure
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -100,9 +58,59 @@ func main() {
 	tokenStore := infraauth.NewFileTokenStore(homeDir + "/.acai")
 	authService := infraauth.NewService(tokenStore)
 
-	// If we have a stored token, set it on the Granola client
-	if cred, err := authService.Status(context.Background()); err == nil && cred.IsValid() {
-		granolaClient.SetToken(cred.Token().AccessToken())
+	// Resolve data source: API token present → "api"; no token → check local cache; explicit override
+	dataSource := resolveDataSource(cfg, homeDir)
+
+	var repo domain.Repository
+	var granolaClient *granola.Client
+
+	switch dataSource {
+	case "local_cache":
+		cachePath := resolveLocalCachePath(cfg, homeDir)
+		reader := localcache.NewReader(cachePath)
+		repo = localcache.NewRepository(reader)
+
+	default: // "api"
+		httpClient := &http.Client{Timeout: cfg.Resilience.Timeout}
+		granolaClient = granola.NewClient(cfg.Granola.APIURL, httpClient, cfg.Granola.APIToken)
+		granolaRepo := granola.NewRepository(granolaClient)
+
+		resilientRepo := resilience.NewResilientRepository(granolaRepo, resilience.Config{
+			Timeout:          cfg.Resilience.Timeout,
+			MaxRetries:       cfg.Resilience.Retry.MaxAttempts,
+			RetryDelay:       cfg.Resilience.Retry.InitialDelay,
+			RetryMaxDelay:    cfg.Resilience.Retry.MaxDelay,
+			FailureThreshold: cfg.Resilience.CircuitBreaker.FailureThreshold,
+			SuccessThreshold: cfg.Resilience.CircuitBreaker.SuccessThreshold,
+			HalfOpenTimeout:  cfg.Resilience.CircuitBreaker.HalfOpenTimeout,
+			RateLimit:        cfg.Resilience.RateLimit.Rate,
+			RateBurst:        cfg.Resilience.RateLimit.Rate * 2,
+			RateInterval:     cfg.Resilience.RateLimit.Interval,
+		})
+		defer func() { _ = resilientRepo.Close() }()
+
+		repo = resilientRepo
+		if cfg.Cache.Enabled {
+			cacheDir := cfg.Cache.Dir
+			if err := os.MkdirAll(cacheDir, 0o700); err != nil {
+				_, _ = fmt.Fprintf(os.Stderr, "Warning: cannot create cache dir: %v\n", err)
+			} else {
+				dbPath := filepath.Join(cacheDir, "cache.db")
+				db, err := sql.Open("sqlite3", dbPath)
+				if err == nil {
+					cachedRepo, cacheErr := cache.NewCachedRepository(resilientRepo, db, cfg.Cache.TTL)
+					if cacheErr == nil {
+						repo = cachedRepo
+						defer func() { _ = db.Close() }()
+					}
+				}
+			}
+		}
+
+		// If we have a stored token, set it on the Granola client
+		if cred, err := authService.Status(context.Background()); err == nil && cred.IsValid() {
+			granolaClient.SetToken(cred.Token().AccessToken())
+		}
 	}
 
 	// Local store (SQLite for write-side: notes, action item overrides, outbox)
@@ -228,4 +236,33 @@ func main() {
 		_, _ = fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
+}
+
+// resolveDataSource determines which data source to use based on configuration.
+// Priority: explicit DataSource setting > API token presence > local cache file existence.
+func resolveDataSource(cfg *config.Config, homeDir string) string {
+	switch cfg.Granola.DataSource {
+	case "api":
+		return "api"
+	case "local_cache":
+		return "local_cache"
+	default: // "auto"
+		if cfg.Granola.APIToken != "" {
+			return "api"
+		}
+		cachePath := resolveLocalCachePath(cfg, homeDir)
+		if _, err := os.Stat(cachePath); err == nil {
+			return "local_cache"
+		}
+		return "api"
+	}
+}
+
+// resolveLocalCachePath returns the path to the Granola local cache file.
+// Uses the configured path if set, otherwise defaults to the standard macOS location.
+func resolveLocalCachePath(cfg *config.Config, homeDir string) string {
+	if cfg.Granola.LocalCachePath != "" {
+		return cfg.Granola.LocalCachePath
+	}
+	return filepath.Join(homeDir, "Library", "Application Support", "Granola", "cache-v3.json")
 }

@@ -1,6 +1,7 @@
 package config_test
 
 import (
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -81,3 +82,104 @@ func TestDefault_PolicyDisabled(t *testing.T) {
 		t.Errorf("got policy file %q, want empty", cfg.Policy.FilePath)
 	}
 }
+
+func TestDefault_DataSourceAuto(t *testing.T) {
+	cfg := config.Default()
+
+	if cfg.Granola.DataSource != "auto" {
+		t.Errorf("got data source %q, want auto", cfg.Granola.DataSource)
+	}
+	if cfg.Granola.LocalCachePath != "" {
+		t.Errorf("got local cache path %q, want empty", cfg.Granola.LocalCachePath)
+	}
+}
+
+func TestLoad_DataSourceEnv(t *testing.T) {
+	t.Setenv("ACAI_DATA_SOURCE", "local_cache")
+	t.Setenv("ACAI_GRANOLA_CACHE_PATH", "/custom/cache-v3.json")
+
+	cfg := config.Load()
+
+	if cfg.Granola.DataSource != "local_cache" {
+		t.Errorf("got data source %q, want local_cache", cfg.Granola.DataSource)
+	}
+	if cfg.Granola.LocalCachePath != "/custom/cache-v3.json" {
+		t.Errorf("got local cache path %q", cfg.Granola.LocalCachePath)
+	}
+}
+
+func TestLoad_FileOverridesDefaults(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+
+	cfgPath := filepath.Join(home, ".acai", "config.yaml")
+	fileCfg := config.FileConfig{
+		DataSource: "local_cache",
+		Granola: config.GranolaFileConfig{
+			APIURL:    "https://file-api.example.com",
+			CachePath: "/file/cache.json",
+		},
+	}
+	if err := config.WriteConfigFile(cfgPath, fileCfg); err != nil {
+		t.Fatalf("WriteConfigFile: %v", err)
+	}
+
+	cfg := config.Load()
+
+	if cfg.Granola.DataSource != "local_cache" {
+		t.Errorf("DataSource = %q, want local_cache", cfg.Granola.DataSource)
+	}
+	if cfg.Granola.APIURL != "https://file-api.example.com" {
+		t.Errorf("APIURL = %q, want https://file-api.example.com", cfg.Granola.APIURL)
+	}
+	if cfg.Granola.LocalCachePath != "/file/cache.json" {
+		t.Errorf("LocalCachePath = %q, want /file/cache.json", cfg.Granola.LocalCachePath)
+	}
+}
+
+func TestLoad_EnvOverridesFile(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+
+	cfgPath := filepath.Join(home, ".acai", "config.yaml")
+	fileCfg := config.FileConfig{
+		DataSource: "local_cache",
+		Granola: config.GranolaFileConfig{
+			APIURL: "https://file-api.example.com",
+		},
+	}
+	if err := config.WriteConfigFile(cfgPath, fileCfg); err != nil {
+		t.Fatalf("WriteConfigFile: %v", err)
+	}
+
+	// Env vars should win over file
+	t.Setenv("ACAI_DATA_SOURCE", "api")
+	t.Setenv("ACAI_GRANOLA_API_URL", "https://env-api.example.com")
+
+	cfg := config.Load()
+
+	if cfg.Granola.DataSource != "api" {
+		t.Errorf("DataSource = %q, want api (env should override file)", cfg.Granola.DataSource)
+	}
+	if cfg.Granola.APIURL != "https://env-api.example.com" {
+		t.Errorf("APIURL = %q, want https://env-api.example.com (env should override file)", cfg.Granola.APIURL)
+	}
+}
+
+func TestLoad_MissingFileUsesDefaults(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	// No config file exists — defaults should be used
+
+	cfg := config.Load()
+
+	defaults := config.Default()
+	if cfg.Granola.DataSource != defaults.Granola.DataSource {
+		t.Errorf("DataSource = %q, want default %q", cfg.Granola.DataSource, defaults.Granola.DataSource)
+	}
+	if cfg.Granola.APIURL != defaults.Granola.APIURL {
+		t.Errorf("APIURL = %q, want default %q", cfg.Granola.APIURL, defaults.Granola.APIURL)
+	}
+}
+
+
