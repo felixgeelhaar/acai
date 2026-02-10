@@ -43,4 +43,4 @@ site/node_modules/
 site/.astro/
 
 # Claude Code
-.claude/settings.local.json
+.claude/
