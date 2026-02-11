@@ -53,8 +53,31 @@ type CacheConference struct {
 }
 
 // CacheTranscript contains all transcript segments for a meeting.
+// The Granola cache stores transcripts in two formats:
+//   - Array directly: [{segment}, {segment}, ...]
+//   - Object with segments field: {"segments": [{segment}, ...]}
+//
+// UnmarshalJSON handles both.
 type CacheTranscript struct {
 	Segments []CacheSegment `json:"segments"`
+}
+
+func (t *CacheTranscript) UnmarshalJSON(data []byte) error {
+	// Try array format first (real Granola cache)
+	var segments []CacheSegment
+	if err := json.Unmarshal(data, &segments); err == nil {
+		t.Segments = segments
+		return nil
+	}
+
+	// Fall back to object format {"segments": [...]}
+	type alias CacheTranscript
+	var obj alias
+	if err := json.Unmarshal(data, &obj); err != nil {
+		return err
+	}
+	t.Segments = obj.Segments
+	return nil
 }
 
 // CacheSegment represents a single spoken segment in a transcript.

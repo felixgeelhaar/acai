@@ -14,7 +14,8 @@ func NewRootCmd(deps *Dependencies) *cobra.Command {
 		Use:   "acai",
 		Short: "Granola meeting intelligence for the MCP ecosystem",
 		Long:  "A CLI and MCP server that exposes Granola meeting data as structured, queryable MCP resources.",
-		SilenceUsage: true,
+		SilenceUsage:  true,
+		SilenceErrors: true,
 	}
 
 	root.PersistentFlags().StringVar(&flagFormat, "format", "table", "Output format: table, json, md")
