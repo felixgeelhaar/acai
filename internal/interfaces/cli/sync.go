@@ -14,6 +14,8 @@ func newSyncCmd(deps *Dependencies) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "sync",
 		Short: "Sync meetings from Granola",
+		Long:  "Fetch the latest meetings from Granola and update the local cache. Optionally filter by date with --since.",
+		Example: "  acai sync\n  acai sync --since 2025-01-01\n  acai sync --since 2025-01-15T09:00:00Z",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			input := meetingapp.SyncMeetingsInput{}
 

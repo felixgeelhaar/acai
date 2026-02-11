@@ -52,6 +52,7 @@ func newAuthLogoutCmd(deps *Dependencies) *cobra.Command {
 	return &cobra.Command{
 		Use:   "logout",
 		Short: "Remove stored credentials",
+		Long:  "Remove stored credentials from ~/.acai/credentials.json. You will need to re-authenticate to use API features.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if deps.Logout == nil {
 				return fmt.Errorf("logout not configured")
@@ -69,6 +70,7 @@ func newAuthStatusCmd(deps *Dependencies) *cobra.Command {
 	return &cobra.Command{
 		Use:   "status",
 		Short: "Check authentication status",
+		Long:  "Show whether you are authenticated and which method is in use (e.g. api_token).",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			out, err := deps.CheckStatus.Execute(cmd.Context())
 			if err != nil {
