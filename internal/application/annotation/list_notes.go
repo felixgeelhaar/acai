@@ -23,11 +23,14 @@ func NewListNotes(noteRepo annotatn.NoteRepository) *ListNotes {
 }
 
 func (uc *ListNotes) Execute(ctx context.Context, input ListNotesInput) (*ListNotesOutput, error) {
-	if input.MeetingID == "" {
-		return nil, annotatn.ErrInvalidMeetingID
-	}
+	var notes []*annotatn.AgentNote
+	var err error
 
-	notes, err := uc.noteRepo.ListByMeeting(ctx, input.MeetingID)
+	if input.MeetingID == "" {
+		notes, err = uc.noteRepo.ListAll(ctx)
+	} else {
+		notes, err = uc.noteRepo.ListByMeeting(ctx, input.MeetingID)
+	}
 	if err != nil {
 		return nil, err
 	}

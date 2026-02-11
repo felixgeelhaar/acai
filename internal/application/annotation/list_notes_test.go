@@ -36,10 +36,19 @@ func TestListNotes_Empty(t *testing.T) {
 	}
 }
 
-func TestListNotes_EmptyMeetingID(t *testing.T) {
-	uc := app.NewListNotes(newMockNoteRepository())
-	_, err := uc.Execute(context.Background(), app.ListNotesInput{MeetingID: ""})
-	if err != annotatn.ErrInvalidMeetingID {
-		t.Errorf("got error %v, want %v", err, annotatn.ErrInvalidMeetingID)
+func TestListNotes_AllNotes(t *testing.T) {
+	noteRepo := newMockNoteRepository()
+	note1, _ := annotatn.NewAgentNote("n-1", "m-1", "claude", "first")
+	note2, _ := annotatn.NewAgentNote("n-2", "m-2", "claude", "second")
+	noteRepo.notes[note1.ID()] = note1
+	noteRepo.notes[note2.ID()] = note2
+
+	uc := app.NewListNotes(noteRepo)
+	out, err := uc.Execute(context.Background(), app.ListNotesInput{MeetingID: ""})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(out.Notes) != 2 {
+		t.Errorf("got %d notes, want 2", len(out.Notes))
 	}
 }

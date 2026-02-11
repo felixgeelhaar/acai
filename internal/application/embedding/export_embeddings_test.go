@@ -55,6 +55,13 @@ func (m *mockNoteRepo) FindByID(_ context.Context, _ annotation.NoteID) (*annota
 func (m *mockNoteRepo) ListByMeeting(_ context.Context, meetingID string) ([]*annotation.AgentNote, error) {
 	return m.notes[meetingID], nil
 }
+func (m *mockNoteRepo) ListAll(_ context.Context) ([]*annotation.AgentNote, error) {
+	var all []*annotation.AgentNote
+	for _, notes := range m.notes {
+		all = append(all, notes...)
+	}
+	return all, nil
+}
 func (m *mockNoteRepo) Delete(_ context.Context, _ annotation.NoteID) error { return nil }
 
 // --- Tests ---

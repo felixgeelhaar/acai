@@ -312,6 +312,17 @@ func (m *mockNoteRepo) ListByMeeting(_ context.Context, meetingID string) ([]*an
 	return result, nil
 }
 
+func (m *mockNoteRepo) ListAll(_ context.Context) ([]*annotatn.AgentNote, error) {
+	var result []*annotatn.AgentNote
+	for _, note := range m.notes {
+		result = append(result, note)
+	}
+	if result == nil {
+		result = []*annotatn.AgentNote{}
+	}
+	return result, nil
+}
+
 func (m *mockNoteRepo) Delete(_ context.Context, id annotatn.NoteID) error {
 	if _, ok := m.notes[id]; !ok {
 		return annotatn.ErrNoteNotFound

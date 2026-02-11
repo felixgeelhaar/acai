@@ -81,6 +81,37 @@ func (r *NoteRepository) ListByMeeting(_ context.Context, meetingID string) ([]*
 	return notes, rows.Err()
 }
 
+func (r *NoteRepository) ListAll(_ context.Context) ([]*annotation.AgentNote, error) {
+	rows, err := r.db.Query(
+		"SELECT id, meeting_id, author, content, created_at FROM agent_notes ORDER BY created_at ASC",
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+
+	var notes []*annotation.AgentNote
+	for rows.Next() {
+		var (
+			noteID    string
+			mid       string
+			author    string
+			content   string
+			createdAt time.Time
+		)
+		if err := rows.Scan(&noteID, &mid, &author, &content, &createdAt); err != nil {
+			return nil, err
+		}
+		notes = append(notes, annotation.ReconstructAgentNote(
+			annotation.NoteID(noteID), mid, author, content, createdAt,
+		))
+	}
+	if notes == nil {
+		notes = []*annotation.AgentNote{}
+	}
+	return notes, rows.Err()
+}
+
 func (r *NoteRepository) Delete(_ context.Context, id annotation.NoteID) error {
 	result, err := r.db.Exec("DELETE FROM agent_notes WHERE id = ?", string(id))
 	if err != nil {

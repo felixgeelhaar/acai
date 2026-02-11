@@ -52,15 +52,22 @@ func newNoteAddCmd(deps *Dependencies) *cobra.Command {
 
 func newNoteListCmd(deps *Dependencies) *cobra.Command {
 	return &cobra.Command{
-		Use:   "list <meeting_id>",
-		Short: "List agent notes for a meeting",
-		Args:  cobra.ExactArgs(1),
+		Use:     "list [meeting_id]",
+		Short:   "List agent notes (all or for a specific meeting)",
+		Example: "  acai note list\n  acai note list meeting-001",
+		Args:    cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if deps.ListNotes == nil {
 				return errLocalDBRequired
 			}
+
+			var meetingID string
+			if len(args) > 0 {
+				meetingID = args[0]
+			}
+
 			out, err := deps.ListNotes.Execute(cmd.Context(), annotationapp.ListNotesInput{
-				MeetingID: args[0],
+				MeetingID: meetingID,
 			})
 			if err != nil {
 				return fmt.Errorf("failed to list notes: %w", err)
@@ -71,10 +78,10 @@ func newNoteListCmd(deps *Dependencies) *cobra.Command {
 				return printJSON(deps, out.Notes)
 			default:
 				w := tabwriter.NewWriter(deps.Out, 0, 0, 2, ' ', 0)
-				_, _ = fmt.Fprintln(w, "ID\tAUTHOR\tCONTENT\tCREATED")
+				_, _ = fmt.Fprintln(w, "ID\tMEETING\tAUTHOR\tCONTENT\tCREATED")
 				for _, n := range out.Notes {
-					_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
-						n.ID(), n.Author(), n.Content(), n.CreatedAt().Format("2006-01-02 15:04"))
+					_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
+						n.ID(), n.MeetingID(), n.Author(), n.Content(), n.CreatedAt().Format("2006-01-02 15:04"))
 				}
 				return w.Flush()
 			}

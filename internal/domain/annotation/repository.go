@@ -8,5 +8,6 @@ type NoteRepository interface {
 	Save(ctx context.Context, note *AgentNote) error
 	FindByID(ctx context.Context, id NoteID) (*AgentNote, error)
 	ListByMeeting(ctx context.Context, meetingID string) ([]*AgentNote, error)
+	ListAll(ctx context.Context) ([]*AgentNote, error)
 	Delete(ctx context.Context, id NoteID) error
 }
