@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	embeddingapp "github.com/felixgeelhaar/acai/internal/application/embedding"
-	exportapp "github.com/felixgeelhaar/acai/internal/application/export"
 	domain "github.com/felixgeelhaar/acai/internal/domain/meeting"
 	"github.com/spf13/cobra"
 )
@@ -13,11 +12,11 @@ import (
 func newExportCmd(deps *Dependencies) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "export",
-		Short: "Export meeting data",
+		Short: "Export data for external tools",
+		Long:  "Export meeting data in formats suitable for external tools and pipelines.",
 	}
 
 	cmd.AddCommand(
-		newExportMeetingCmd(deps),
 		newExportEmbeddingsCmd(deps),
 	)
 	return cmd
@@ -71,33 +70,4 @@ time_window (fixed time intervals), or token_limit (max tokens per chunk).`,
 	cmd.Flags().StringVar(&strategy, "strategy", "speaker_turn", "Chunking strategy: speaker_turn, time_window, token_limit")
 	cmd.Flags().IntVar(&maxTokens, "max-tokens", 256, "Max tokens per chunk (for token_limit strategy)")
 	return cmd
-}
-
-func newExportMeetingCmd(deps *Dependencies) *cobra.Command {
-	return &cobra.Command{
-		Use:   "meeting <meeting_id>",
-		Short: "Export a meeting as markdown or JSON",
-		Long: `Export a meeting's full content including title, participants, summary, transcript, and action items.
-
-Defaults to markdown format. Use --format json for structured output.`,
-		Example: "  acai export meeting meeting-001\n  acai export meeting meeting-001 --format json",
-		Args:    cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			format := exportapp.Format(flagFormat)
-			if flagFormat == "table" {
-				format = exportapp.FormatMarkdown
-			}
-
-			out, err := deps.ExportMeeting.Execute(cmd.Context(), exportapp.ExportMeetingInput{
-				MeetingID: domain.MeetingID(args[0]),
-				Format:    format,
-			})
-			if err != nil {
-				return fmt.Errorf("export failed: %w", err)
-			}
-
-			_, _ = fmt.Fprint(deps.Out, out.Content)
-			return nil
-		},
-	}
 }

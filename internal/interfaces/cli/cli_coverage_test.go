@@ -12,7 +12,7 @@ func TestListMeetingsCmd_TableFormat(t *testing.T) {
 	deps := testDeps(t)
 	root := cli.NewRootCmd(deps)
 
-	root.SetArgs([]string{"list", "meetings", "--format", "table"})
+	root.SetArgs([]string{"meeting", "list", "--format", "table"})
 	if err := root.Execute(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -27,7 +27,7 @@ func TestListMeetingsCmd_JSONFormat(t *testing.T) {
 	deps := testDeps(t)
 	root := cli.NewRootCmd(deps)
 
-	root.SetArgs([]string{"list", "meetings", "--format", "json"})
+	root.SetArgs([]string{"meeting", "list", "--format", "json"})
 	if err := root.Execute(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -42,7 +42,7 @@ func TestListMeetingsCmd_WithSource(t *testing.T) {
 	deps := testDeps(t)
 	root := cli.NewRootCmd(deps)
 
-	root.SetArgs([]string{"list", "meetings", "--source", "zoom", "--limit", "5"})
+	root.SetArgs([]string{"meeting", "list", "--source", "zoom", "--limit", "5"})
 	if err := root.Execute(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -88,7 +88,7 @@ func TestExportMeetingCmd_JSONFormat(t *testing.T) {
 	deps := testDeps(t)
 	root := cli.NewRootCmd(deps)
 
-	root.SetArgs([]string{"export", "meeting", "m-1", "--format", "json"})
+	root.SetArgs([]string{"meeting", "export", "m-1", "--format", "json"})
 	if err := root.Execute(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -103,7 +103,7 @@ func TestExportMeetingCmd_MarkdownFormat(t *testing.T) {
 	deps := testDeps(t)
 	root := cli.NewRootCmd(deps)
 
-	root.SetArgs([]string{"export", "meeting", "m-1", "--format", "md"})
+	root.SetArgs([]string{"meeting", "export", "m-1", "--format", "md"})
 	if err := root.Execute(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

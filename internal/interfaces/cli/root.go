@@ -24,12 +24,14 @@ func NewRootCmd(deps *Dependencies) *cobra.Command {
 	root.AddCommand(
 		newInitCmd(),
 		newAuthCmd(deps),
-		newSyncCmd(deps),
-		newListCmd(deps),
-		newExportCmd(deps),
-		newServeCmd(deps),
+		newMeetingCmd(deps),
+		newTranscriptCmd(deps),
 		newNoteCmd(deps),
 		newActionCmd(deps),
+		newStatsCmd(deps),
+		newExportCmd(deps),
+		newSyncCmd(deps),
+		newServeCmd(deps),
 		newVersionCmd(),
 	)
 

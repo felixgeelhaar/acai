@@ -214,6 +214,7 @@ func main() {
 		GetTranscript:      getTranscript,
 		SearchTranscripts:  searchTranscripts,
 		GetActionItems:     getActionItems,
+		GetMeetingStats:    getMeetingStats,
 		SyncMeetings:       syncMeetings,
 		ExportMeeting:      exportMeeting,
 		Login:              login,

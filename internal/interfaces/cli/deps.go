@@ -28,6 +28,7 @@ type Dependencies struct {
 	GetTranscript     *meetingapp.GetTranscript
 	SearchTranscripts *meetingapp.SearchTranscripts
 	GetActionItems    *meetingapp.GetActionItems
+	GetMeetingStats   *meetingapp.GetMeetingStats
 	SyncMeetings      *meetingapp.SyncMeetings
 	ExportMeeting     *exportapp.ExportMeeting
 	Login             *authapp.Login

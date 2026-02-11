@@ -23,7 +23,7 @@ func TestRootCmd_HasExpectedSubcommands(t *testing.T) {
 	deps := testDeps(t)
 	root := cli.NewRootCmd(deps)
 
-	expected := []string{"auth", "sync", "list", "export", "serve", "note", "action", "version"}
+	expected := []string{"auth", "sync", "meeting", "transcript", "stats", "export", "serve", "note", "action", "version"}
 	for _, name := range expected {
 		found := false
 		for _, cmd := range root.Commands() {
@@ -99,7 +99,7 @@ func TestExportMeetingCmd(t *testing.T) {
 	deps := testDeps(t)
 	root := cli.NewRootCmd(deps)
 
-	root.SetArgs([]string{"export", "meeting", "m-1"})
+	root.SetArgs([]string{"meeting", "export", "m-1"})
 	if err := root.Execute(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -114,7 +114,7 @@ func TestExportMeetingCmd_MissingArg(t *testing.T) {
 	deps := testDeps(t)
 	root := cli.NewRootCmd(deps)
 
-	root.SetArgs([]string{"export", "meeting"})
+	root.SetArgs([]string{"meeting", "export"})
 	err := root.Execute()
 	if err == nil {
 		t.Error("expected error for missing meeting ID")
@@ -256,6 +256,7 @@ func testDeps(t *testing.T) *cli.Dependencies {
 		GetTranscript:     meetingapp.NewGetTranscript(repo),
 		SearchTranscripts: meetingapp.NewSearchTranscripts(repo),
 		GetActionItems:    meetingapp.NewGetActionItems(repo),
+		GetMeetingStats:   meetingapp.NewGetMeetingStats(repo),
 		SyncMeetings:      meetingapp.NewSyncMeetings(repo),
 		ExportMeeting:     exportapp.NewExportMeeting(repo),
 		Login:             authapp.NewLogin(authSvc),
