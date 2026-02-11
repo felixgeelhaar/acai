@@ -51,7 +51,7 @@ func runInit(cmd *cobra.Command) error {
 			return err
 		}
 		if !overwrite {
-			fmt.Fprintln(out, "Init cancelled.")
+			_, _ = fmt.Fprintln(out, "Init cancelled.")
 			return nil
 		}
 	}
@@ -64,11 +64,6 @@ func runInit(cmd *cobra.Command) error {
 	}
 
 	// Build connection options
-	type connectionChoice struct {
-		dataSource string
-		label      string
-	}
-
 	var options []huh.Option[string]
 	if cacheDetected {
 		options = []huh.Option[string]{
@@ -120,7 +115,7 @@ func runInit(cmd *cobra.Command) error {
 			return fmt.Errorf("token validation failed: %w", err)
 		}
 
-		fmt.Fprintln(out, "API token stored in credentials.json")
+		_, _ = fmt.Fprintln(out, "API token stored in credentials.json")
 	}
 
 	// Handle local cache path
@@ -149,18 +144,18 @@ func runInit(cmd *cobra.Command) error {
 	}
 
 	// Print summary
-	fmt.Fprintln(out)
-	fmt.Fprintln(out, "Configuration saved to", configPath)
-	fmt.Fprintln(out)
-	fmt.Fprintln(out, "  data_source:", fileCfg.DataSource)
+	_, _ = fmt.Fprintln(out)
+	_, _ = fmt.Fprintln(out, "Configuration saved to", configPath)
+	_, _ = fmt.Fprintln(out)
+	_, _ = fmt.Fprintln(out, "  data_source:", fileCfg.DataSource)
 	if fileCfg.Granola.APIURL != "" {
-		fmt.Fprintln(out, "  api_url:    ", fileCfg.Granola.APIURL)
+		_, _ = fmt.Fprintln(out, "  api_url:    ", fileCfg.Granola.APIURL)
 	}
 	if fileCfg.Granola.CachePath != "" {
-		fmt.Fprintln(out, "  cache_path: ", fileCfg.Granola.CachePath)
+		_, _ = fmt.Fprintln(out, "  cache_path: ", fileCfg.Granola.CachePath)
 	}
-	fmt.Fprintln(out)
-	fmt.Fprintln(out, "Run 'acai list meetings' to verify your setup.")
+	_, _ = fmt.Fprintln(out)
+	_, _ = fmt.Fprintln(out, "Run 'acai meeting list' to verify your setup.")
 
 	return nil
 }

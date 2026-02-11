@@ -392,7 +392,9 @@ func TestRepositorySync(t *testing.T) {
 		innerBytes, _ := json.Marshal(inner)
 		envelope := CacheFileEnvelope{Cache: string(innerBytes)}
 		outerBytes, _ := json.Marshal(envelope)
-		os.WriteFile(path, outerBytes, 0o644)
+		if err := os.WriteFile(path, outerBytes, 0o644); err != nil {
+			t.Fatalf("failed to write test cache file: %v", err)
+		}
 
 		events, err := repo.Sync(ctx, nil)
 		if err != nil {

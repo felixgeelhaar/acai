@@ -141,7 +141,7 @@ func (s *Server) ServeHTTP(ctx context.Context, addr string, extraRoutes func(mu
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(data)
+		_, _ = w.Write(data)
 	})
 
 	if extraRoutes != nil {
