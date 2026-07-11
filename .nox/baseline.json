@@ -1,0 +1,59 @@
+{
+  "schema_version": "1.0.0",
+  "entries": [
+    {
+      "fingerprint": "8842db314bb3e09388f1a86001c225974121e2d637dc4d45d5b685709bf49f5c",
+      "rule_id": "DATA-002",
+      "file_path": "internal/infrastructure/policy/redactor_test.go",
+      "severity": "high",
+      "reason": "Adoption baseline: 3 documented FPs (SSN test fixture redactor_test.go, SSN docs example AgentPolicies.astro, id-token:write permissions misread as secret in pages.yml) + 3 pre-existing IAC-013 unpinned-action findings in existing ci/pages/release workflows accepted for this nox-adoption PR (tracked for SHA-pin follow-up).",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-07-11T11:17:42.844526Z"
+    },
+    {
+      "fingerprint": "63ff8e1da3700a262e285e4c65700c16758a81ced9747e0d95377bb396dc671d",
+      "rule_id": "DATA-002",
+      "file_path": "site/src/components/AgentPolicies.astro",
+      "severity": "high",
+      "reason": "Adoption baseline: 3 documented FPs (SSN test fixture redactor_test.go, SSN docs example AgentPolicies.astro, id-token:write permissions misread as secret in pages.yml) + 3 pre-existing IAC-013 unpinned-action findings in existing ci/pages/release workflows accepted for this nox-adoption PR (tracked for SHA-pin follow-up).",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-07-11T11:17:42.844526Z"
+    },
+    {
+      "fingerprint": "8533ee1ccd42d189724a3bc43cda84b9c188265c6f1fd8ac638345deaac580bc",
+      "rule_id": "IAC-013",
+      "file_path": ".github/workflows/ci.yml",
+      "severity": "high",
+      "reason": "Adoption baseline: 3 documented FPs (SSN test fixture redactor_test.go, SSN docs example AgentPolicies.astro, id-token:write permissions misread as secret in pages.yml) + 3 pre-existing IAC-013 unpinned-action findings in existing ci/pages/release workflows accepted for this nox-adoption PR (tracked for SHA-pin follow-up).",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-07-11T11:17:42.844526Z"
+    },
+    {
+      "fingerprint": "213dc33cc7f95aed46469b3035c54b5f9e846582e2de305f19b5e54b7268a394",
+      "rule_id": "IAC-013",
+      "file_path": ".github/workflows/pages.yml",
+      "severity": "high",
+      "reason": "Adoption baseline: 3 documented FPs (SSN test fixture redactor_test.go, SSN docs example AgentPolicies.astro, id-token:write permissions misread as secret in pages.yml) + 3 pre-existing IAC-013 unpinned-action findings in existing ci/pages/release workflows accepted for this nox-adoption PR (tracked for SHA-pin follow-up).",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-07-11T11:17:42.844526Z"
+    },
+    {
+      "fingerprint": "cb32d96da520c9c12b3acff7ac9cf69b5e3d6a8e22f85b7badf23361282bcc6b",
+      "rule_id": "IAC-013",
+      "file_path": ".github/workflows/release.yml",
+      "severity": "high",
+      "reason": "Adoption baseline: 3 documented FPs (SSN test fixture redactor_test.go, SSN docs example AgentPolicies.astro, id-token:write permissions misread as secret in pages.yml) + 3 pre-existing IAC-013 unpinned-action findings in existing ci/pages/release workflows accepted for this nox-adoption PR (tracked for SHA-pin follow-up).",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-07-11T11:17:42.844526Z"
+    },
+    {
+      "fingerprint": "22df83a7b52ce4b665c7463555bd49f17ae2cfdf0320c6447e4ccf97c8aa3773",
+      "rule_id": "IAC-351",
+      "file_path": ".github/workflows/pages.yml",
+      "severity": "critical",
+      "reason": "Adoption baseline: 3 documented FPs (SSN test fixture redactor_test.go, SSN docs example AgentPolicies.astro, id-token:write permissions misread as secret in pages.yml) + 3 pre-existing IAC-013 unpinned-action findings in existing ci/pages/release workflows accepted for this nox-adoption PR (tracked for SHA-pin follow-up).",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-07-11T11:17:42.844526Z"
+    }
+  ]
+}

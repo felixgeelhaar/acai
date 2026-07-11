@@ -1,0 +1,39 @@
+# warden — local git gate for acai (Go). Sole hook manager; the persistent
+# artifact is this file. pre-commit stays fast (format + vet); pre-push runs the
+# checks CI enforces (race tests, build) so nothing leaves the machine that CI
+# would reject. warden's native hooks live in .git/hooks and auto-fetch the
+# binary if missing, so a fresh clone is gated with no toolchain beyond the Go
+# SDK the repo already requires.
+#
+# NOTE: this repo ships no .golangci.yml, so golangci-lint is intentionally NOT
+# a warden command here (CI runs it with default rules; add it back once a
+# .golangci.yml is committed). Tests/build run with CGO on the dev's machine
+# (mattn/go-sqlite3), matching CI's CGO_ENABLED=1.
+extends: ''
+agent: auto
+hooks:
+  pre_commit: true
+  pre_push: true
+commands:
+  # gofmt -l lists mis-formatted files; warden treats non-empty output as a
+  # failure, so this CHECKS formatting (run `gofmt -w .` to fix).
+  gofmt: gofmt -l .
+  govet: go vet ./...
+  gotest: go test -race ./...
+  gobuild: go build ./...
+steps:
+  pre_commit:
+    - gofmt
+    - govet
+  pre_push:
+    - rebase
+    - gofmt
+    - govet
+    - gotest
+    - gobuild
+risk:
+  diff_lines_high: 400
+  files_touched_high: 15
+pr:
+  enabled: false
+rules: []

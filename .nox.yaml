@@ -1,0 +1,42 @@
+# nox configuration — the security/dependency gate that replaces dependabot.
+# Schema reference: https://github.com/nox-hq/nox
+#
+# Only GENERATED, VENDORED, or PROSE/DATA artifacts are excluded here. All
+# first-party Go source — including *_test.go — is scanned. Any remaining
+# first-party critical/high findings are accepted as documented false positives
+# via .nox/baseline.json, never by blinding whole source directories.
+
+scan:
+  exclude:
+    # Go module checksum database — SHA-256 module digests read as high-entropy
+    # secrets/API keys to the entropy detector. Real dependency CVEs are
+    # surfaced via OSV lookups on go.mod, not go.sum text.
+    # Classification: False Positive (module digests). Last reviewed: 2026-07-11
+    - go.sum
+    - "**/go.sum"
+    # npm lockfile for the docs website (site/, Astro Starlight): integrity
+    # hashes look like API keys to the entropy detector. Dependency CVEs are
+    # surfaced via OSV directly, not the lockfile text.
+    # Classification: False Positive (integrity hashes). Last reviewed: 2026-07-11
+    - "**/package-lock.json"
+    # Markdown is prose — README, docs/, CHANGELOG, and the site/ content. The
+    # secret/PII entropy rules fire on ordinary documentation. High-confidence
+    # real secret patterns are still caught in code, not prose.
+    # Classification: False Positive (prose). Last reviewed: 2026-07-11
+    - README.md
+    - "*.md"
+    - "**/*.md"
+    # Test fixtures — golden/data files under testdata/ are inert sample data,
+    # not executable code, and trip secret/data rules.
+    # Classification: False Positive (test fixtures). Last reviewed: 2026-07-11
+    - testdata/
+    # Generated protobuf stubs — machine-generated, not hand-authored source.
+    # Classification: Acceptable Pattern (generated code). Last reviewed: 2026-07-11
+    - "*.pb.go"
+    # nox's own baseline/cache and report output — finding fingerprints are
+    # SHA-256 hex that re-trip the secret detector. Never scan the scanner.
+    # Classification: Acceptable Pattern (scanner state). Last reviewed: 2026-07-11
+    - .nox/
+    - findings.json
+    - nox-results/
+    - "*.sarif"
