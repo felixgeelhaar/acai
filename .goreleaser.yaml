@@ -50,19 +50,15 @@ changelog:
       - "^ci:"
       - "^chore:"
 
-brews:
-  - repository:
-      owner: felixgeelhaar
-      name: homebrew-tap
-      token: "{{ .Env.GITHUB_TOKEN }}"
-    directory: Formula
-    name: acai
-    homepage: "https://github.com/felixgeelhaar/acai"
-    description: "Go CLI and MCP server for Granola meeting intelligence"
-    license: "MIT"
-    install: |
-      bin.install "acai"
-
+homebrew_casks:
+    - repository:
+        owner: "felixgeelhaar"
+        name: "homebrew-tap"
+        token: "{{ .Env.GITHUB_TOKEN }}"
+      name: "acai"
+      homepage: "https://github.com/felixgeelhaar/acai"
+      description: "Go CLI and MCP server for Granola meeting intelligence"
+      license: "MIT"
 release:
   github:
     owner: felixgeelhaar
