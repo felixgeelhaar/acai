@@ -9,10 +9,10 @@
     "astro": "astro"
   },
   "dependencies": {
-    "astro": "^6.4.3",
     "@astrojs/vue": "^6.0.1",
-    "vue": "^3.5.0",
     "@tailwindcss/vite": "^4.1.0",
-    "tailwindcss": "^4.1.0"
+    "astro": "^6.4.8",
+    "tailwindcss": "^4.1.0",
+    "vue": "^3.5.0"
   }
 }
