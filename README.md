@@ -8,6 +8,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/felixgeelhaar/acai)](https://goreportcard.com/report/github.com/felixgeelhaar/acai)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/felixgeelhaar/acai)](https://github.com/felixgeelhaar/acai/releases)
+[![nox security grade](.github/nox-badge.svg)](.github/workflows/nox-scan.yml)
 
 **[Website](https://felixgeelhaar.github.io/acai/)** | **[Getting Started](#quick-start)** | **[Documentation](#mcp-server)**
 

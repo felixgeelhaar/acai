@@ -40,3 +40,7 @@ scan:
     - findings.json
     - nox-results/
     - "*.sarif"
+    # relicta release-run records — machine-generated release-pipeline state
+    # whose hashes/ids trip the data-exposure rules.
+    # Classification: Acceptable Pattern (generated release state). Last reviewed: 2026-11-15
+    - .relicta/

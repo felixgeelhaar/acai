@@ -54,6 +54,357 @@
       "reason": "Adoption baseline: 3 documented FPs (SSN test fixture redactor_test.go, SSN docs example AgentPolicies.astro, id-token:write permissions misread as secret in pages.yml) + 3 pre-existing IAC-013 unpinned-action findings in existing ci/pages/release workflows accepted for this nox-adoption PR (tracked for SHA-pin follow-up).",
       "owner": "felixgeelhaar",
       "created_at": "2026-07-11T11:17:42.844526Z"
+    },
+    {
+      "fingerprint": "ba6d4862014f6ce0c10df45f4e79d1dc1eeb5f1774879cd7020d19b0577c9061",
+      "rule_id": "IAC-306",
+      "file_path": ".github/workflows/pages.yml",
+      "severity": "medium",
+      "reason": "Reviewed false positive: actions/deploy-pages requires id-token: write (GitHub Pages OIDC deployment); scoped to the Deploy Site workflow only.",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:22:23.28804Z"
+    },
+    {
+      "fingerprint": "52922952e40b8c5ebd4fef0969dd782d57266e9ecccc4e9bddc9be74f0f6daa2",
+      "rule_id": "IAC-308",
+      "file_path": ".github/workflows/nox-remediate.yml",
+      "severity": "low",
+      "reason": "Reviewed accepted: manual workflow_dispatch is intentional (maintainer-triggered site redeploy / weekly nox remediation); requires repo write access.",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:22:28.218691Z"
+    },
+    {
+      "fingerprint": "1bf5ffaf4038a450a301180174f387e03abc28da49ffe4c9f9980cc06e41b413",
+      "rule_id": "IAC-308",
+      "file_path": ".github/workflows/pages.yml",
+      "severity": "low",
+      "reason": "Reviewed accepted: manual workflow_dispatch is intentional (maintainer-triggered site redeploy / weekly nox remediation); requires repo write access.",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:22:28.218691Z"
+    },
+    {
+      "fingerprint": "efffd45e45bdf218052ebd23a0a2fc2295219290f6341d868fed455c871b6993",
+      "rule_id": "IAC-155",
+      "file_path": ".github/workflows/nox-remediate.yml",
+      "severity": "medium",
+      "reason": "Reviewed accepted: nox-remediate manual trigger is maintainer-only (write access) and only opens a remediation PR via the central reusable workflow.",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:22:33.71121Z"
+    },
+    {
+      "fingerprint": "8378df7a1d4adb5806616a668bc89e456b48fe9b7212ca5799b5b8eddbe0ae9c",
+      "rule_id": "IAC-314",
+      "file_path": ".github/workflows/nox-remediate.yml",
+      "severity": "medium",
+      "reason": "Reviewed accepted: contents: write is required (release workflow publishes GitHub release assets; nox-remediate pushes a remediation branch).",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:22:38.695983Z"
+    },
+    {
+      "fingerprint": "e37e2faa5f7d812400d1323a31d22e93b710b881ea06f3b656d724454d47a8f4",
+      "rule_id": "IAC-314",
+      "file_path": ".github/workflows/release.yml",
+      "severity": "low",
+      "reason": "Reviewed accepted: contents: write is required (release workflow publishes GitHub release assets; nox-remediate pushes a remediation branch).",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:22:38.695983Z"
+    },
+    {
+      "fingerprint": "530e8464b73bb94d797aa233bcd4b2ea933dd8644a2b0a15d0bb6b7ba128980d",
+      "rule_id": "IAC-309",
+      "file_path": ".github/workflows/nox-scan.yml",
+      "severity": "low",
+      "reason": "Reviewed accepted: cancel-in-progress on a PR-scan concurrency group is intentional (superseded scans are discarded).",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:22:45.045176Z"
+    },
+    {
+      "fingerprint": "739e462b5efd69933915ec7ad09def3fc36e907a51f855cc4986fe4b7c05c1b8",
+      "rule_id": "IAC-018",
+      "file_path": ".github/workflows/nox-scan.yml",
+      "severity": "low",
+      "reason": "Reviewed accepted: continue-on-error only on optional taint-analysis plugin install, since plugin registry 404s are not a security failure; the scan step itself is not suppressed.",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:22:49.931284Z"
+    },
+    {
+      "fingerprint": "19ca41c803dc45090bdfcf5725e7941025dfc91f7c4a818d9a6fdb1f89e9e7a5",
+      "rule_id": "SEC-951",
+      "file_path": "internal/integration/integration_test.go",
+      "severity": "medium",
+      "reason": "Reviewed false positive: placeholder test token constant (testToken) in an integration test, not a credential.",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:22:54.106036Z"
+    },
+    {
+      "fingerprint": "28feb4bce289d8dfcaaa4d56e2793a202c7f988718a1299c81b8c0ce29f34845",
+      "rule_id": "IAC-310",
+      "file_path": ".github/workflows/nox-scan.yml",
+      "severity": "medium",
+      "reason": "Reviewed accepted: the continue-on-error on the optional taint-analysis plugin install is intentional; registry 404s are not a security failure and the scan step itself is not suppressed.",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:23:47.350911Z"
+    },
+    {
+      "fingerprint": "c076879c0c5de345113b62145b23a0366e2e4138240b94077e3e0b0dfbb60417",
+      "rule_id": "DATA-001",
+      "file_path": "internal/application/export/export_meeting_test.go",
+      "severity": "medium",
+      "reason": "Reviewed false positive: synthetic example email/name fixtures in *_test.go files (example.com addresses), not real personal data.",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:23:57.525849Z"
+    },
+    {
+      "fingerprint": "e94d03cb0def02569cbce180cc6842e03dc6991786c0ea814fcc2da77e97a1e4",
+      "rule_id": "DATA-001",
+      "file_path": "internal/application/meeting/get_meeting_stats_test.go",
+      "severity": "medium",
+      "reason": "Reviewed false positive: synthetic example email/name fixtures in *_test.go files (example.com addresses), not real personal data.",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:23:57.525849Z"
+    },
+    {
+      "fingerprint": "41116c9566d994609909b2f68ca98b82bc45a2e6203e637142f0e00bbd07efe4",
+      "rule_id": "DATA-001",
+      "file_path": "internal/application/meeting/get_meeting_stats_test.go",
+      "severity": "medium",
+      "reason": "Reviewed false positive: synthetic example email/name fixtures in *_test.go files (example.com addresses), not real personal data.",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:23:57.525849Z"
+    },
+    {
+      "fingerprint": "3cffed1f7899c4c9bdb5d27917845469dd7dbd30899fccf20fd88284a6785998",
+      "rule_id": "DATA-001",
+      "file_path": "internal/application/meeting/get_meeting_stats_test.go",
+      "severity": "medium",
+      "reason": "Reviewed false positive: synthetic example email/name fixtures in *_test.go files (example.com addresses), not real personal data.",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:23:57.525849Z"
+    },
+    {
+      "fingerprint": "19063912a93684d1ff6d2c67f216a9765c531c5819ba0053d56d3b226d4bf5ea",
+      "rule_id": "DATA-001",
+      "file_path": "internal/domain/meeting/meeting_test.go",
+      "severity": "medium",
+      "reason": "Reviewed false positive: synthetic example email/name fixtures in *_test.go files (example.com addresses), not real personal data.",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:23:57.525849Z"
+    },
+    {
+      "fingerprint": "e8cce7cc7555b4aa0c1ce3d57fef0dcf8eab5fe46eef13d5a88a3eb00b0d2dde",
+      "rule_id": "DATA-001",
+      "file_path": "internal/domain/meeting/meeting_test.go",
+      "severity": "medium",
+      "reason": "Reviewed false positive: synthetic example email/name fixtures in *_test.go files (example.com addresses), not real personal data.",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:23:57.525849Z"
+    },
+    {
+      "fingerprint": "394e1d941196ad9932d456c11ba4cb731d36ad2ed35ef78e04198b8b30f2f063",
+      "rule_id": "DATA-001",
+      "file_path": "internal/domain/meeting/meeting_test.go",
+      "severity": "medium",
+      "reason": "Reviewed false positive: synthetic example email/name fixtures in *_test.go files (example.com addresses), not real personal data.",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:23:57.525849Z"
+    },
+    {
+      "fingerprint": "cf56a9013cdfd824b477d9a972bb2203c9eb9d6932c4e781e36bca8a0423c9cc",
+      "rule_id": "DATA-001",
+      "file_path": "internal/domain/meeting/value_objects_test.go",
+      "severity": "medium",
+      "reason": "Reviewed false positive: synthetic example email/name fixtures in *_test.go files (example.com addresses), not real personal data.",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:23:57.525849Z"
+    },
+    {
+      "fingerprint": "8f2882c28247378450bd12426417a21761c9e27754451ec211df84c97fd3113c",
+      "rule_id": "DATA-001",
+      "file_path": "internal/domain/meeting/value_objects_test.go",
+      "severity": "medium",
+      "reason": "Reviewed false positive: synthetic example email/name fixtures in *_test.go files (example.com addresses), not real personal data.",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:23:57.525849Z"
+    },
+    {
+      "fingerprint": "8abdfde971f9685605aecf47c0ef4c45eccc578adffc2a43b21094d8e5aadb3c",
+      "rule_id": "DATA-001",
+      "file_path": "internal/infrastructure/granola/client_test.go",
+      "severity": "medium",
+      "reason": "Reviewed false positive: synthetic example email/name fixtures in *_test.go files (example.com addresses), not real personal data.",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:23:57.525849Z"
+    },
+    {
+      "fingerprint": "ba67937f97cdf5e59389a3805c95dc316a1ef1da3c4e0a14df21bd32a0c3c44c",
+      "rule_id": "DATA-001",
+      "file_path": "internal/infrastructure/granola/mapper_test.go",
+      "severity": "medium",
+      "reason": "Reviewed false positive: synthetic example email/name fixtures in *_test.go files (example.com addresses), not real personal data.",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:23:57.525849Z"
+    },
+    {
+      "fingerprint": "6f00322d0ed51b58bce61aa5ac454b89dd68fb4e81b0db1d5c7c37639d7283f4",
+      "rule_id": "DATA-001",
+      "file_path": "internal/infrastructure/granola/mapper_test.go",
+      "severity": "medium",
+      "reason": "Reviewed false positive: synthetic example email/name fixtures in *_test.go files (example.com addresses), not real personal data.",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:23:57.525849Z"
+    },
+    {
+      "fingerprint": "4744e6682d414b12b2c4c573bf45bfb2636497cc6f6b1683c318099514c25fe5",
+      "rule_id": "DATA-001",
+      "file_path": "internal/infrastructure/granola/repository_test.go",
+      "severity": "medium",
+      "reason": "Reviewed false positive: synthetic example email/name fixtures in *_test.go files (example.com addresses), not real personal data.",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:23:57.525849Z"
+    },
+    {
+      "fingerprint": "f1992025537d5efa83a35869cad9b46278a89016cb128a7ef8a87f236ea253d1",
+      "rule_id": "DATA-001",
+      "file_path": "internal/infrastructure/localcache/mapper_test.go",
+      "severity": "medium",
+      "reason": "Reviewed false positive: synthetic example email/name fixtures in *_test.go files (example.com addresses), not real personal data.",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:23:57.525849Z"
+    },
+    {
+      "fingerprint": "f23eb382ed3645f8882c5c9c6b39279c63446f10b582c5a59e01b09bdec972d9",
+      "rule_id": "DATA-001",
+      "file_path": "internal/infrastructure/localcache/mapper_test.go",
+      "severity": "medium",
+      "reason": "Reviewed false positive: synthetic example email/name fixtures in *_test.go files (example.com addresses), not real personal data.",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:23:57.525849Z"
+    },
+    {
+      "fingerprint": "d2790fbbe87364d8e977fca2be086b66c52e000155daf4d3b0552ec38c7a1e37",
+      "rule_id": "DATA-001",
+      "file_path": "internal/infrastructure/localcache/repository_test.go",
+      "severity": "medium",
+      "reason": "Reviewed false positive: synthetic example email/name fixtures in *_test.go files (example.com addresses), not real personal data.",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:23:57.525849Z"
+    },
+    {
+      "fingerprint": "451edd3556823a29992811f3cab40e72745b5df7c194530ecdf62120483e4c32",
+      "rule_id": "DATA-001",
+      "file_path": "internal/infrastructure/localcache/repository_test.go",
+      "severity": "medium",
+      "reason": "Reviewed false positive: synthetic example email/name fixtures in *_test.go files (example.com addresses), not real personal data.",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:23:57.525849Z"
+    },
+    {
+      "fingerprint": "6b290c9c1dae3e9f87acb67af1e4a627eb5072b279159bd48772d1cbd02ec015",
+      "rule_id": "DATA-001",
+      "file_path": "internal/infrastructure/localcache/repository_test.go",
+      "severity": "medium",
+      "reason": "Reviewed false positive: synthetic example email/name fixtures in *_test.go files (example.com addresses), not real personal data.",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:23:57.525849Z"
+    },
+    {
+      "fingerprint": "e7188f65e11fb50f8cfbbba81ff4cc4f78d206f4ea694bd45b1ee76e533cb8e6",
+      "rule_id": "DATA-001",
+      "file_path": "internal/infrastructure/policy/engine_test.go",
+      "severity": "medium",
+      "reason": "Reviewed false positive: synthetic example email/name fixtures in *_test.go files (example.com addresses), not real personal data.",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:23:57.525849Z"
+    },
+    {
+      "fingerprint": "79adb77c3928735dc51ac7484d0ed8a13b6b9b6faf077f96857ad25e401d588a",
+      "rule_id": "DATA-001",
+      "file_path": "internal/infrastructure/policy/redactor_test.go",
+      "severity": "medium",
+      "reason": "Reviewed false positive: synthetic example email/name fixtures in *_test.go files (example.com addresses), not real personal data.",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:23:57.525849Z"
+    },
+    {
+      "fingerprint": "6671ba71f56004d621eb5d881f8ed0e0a7e9c4420e39e7d0a667b801539a847e",
+      "rule_id": "DATA-001",
+      "file_path": "internal/infrastructure/policy/redactor_test.go",
+      "severity": "medium",
+      "reason": "Reviewed false positive: synthetic example email/name fixtures in *_test.go files (example.com addresses), not real personal data.",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:23:57.525849Z"
+    },
+    {
+      "fingerprint": "c87cf43233e6078351b192d6dab4eb52ffd0ffc7c2ed8fff2164a5dd4d824f1e",
+      "rule_id": "DATA-001",
+      "file_path": "internal/integration/integration_test.go",
+      "severity": "medium",
+      "reason": "Reviewed false positive: synthetic example email/name fixtures in *_test.go files (example.com addresses), not real personal data.",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:23:57.525849Z"
+    },
+    {
+      "fingerprint": "1aaefaa594da19a852414be05250f796828c6265349ea08102c7fb6fbbac17d5",
+      "rule_id": "DATA-001",
+      "file_path": "internal/integration/integration_test.go",
+      "severity": "medium",
+      "reason": "Reviewed false positive: synthetic example email/name fixtures in *_test.go files (example.com addresses), not real personal data.",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:23:57.525849Z"
+    },
+    {
+      "fingerprint": "9f4db1f7dac73ba908a458635ec7f71f93861993ee03fec8ad8487a2746f0cf4",
+      "rule_id": "DATA-001",
+      "file_path": "internal/integration/integration_test.go",
+      "severity": "medium",
+      "reason": "Reviewed false positive: synthetic example email/name fixtures in *_test.go files (example.com addresses), not real personal data.",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:23:57.525849Z"
+    },
+    {
+      "fingerprint": "ec9c1d80ab1ed171a0bbf1c6fc813f1dae140280f48a6ee796e29d57e79586ae",
+      "rule_id": "DATA-001",
+      "file_path": "internal/integration/mcp_test.go",
+      "severity": "medium",
+      "reason": "Reviewed false positive: synthetic example email/name fixtures in *_test.go files (example.com addresses), not real personal data.",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:23:57.525849Z"
+    },
+    {
+      "fingerprint": "af63845b93f79804199d8a8fe82b529ae558b772e3fc8e654fdc78396db3fbe7",
+      "rule_id": "DATA-001",
+      "file_path": "internal/interfaces/mcp/policy_middleware_test.go",
+      "severity": "medium",
+      "reason": "Reviewed false positive: synthetic example email/name fixtures in *_test.go files (example.com addresses), not real personal data.",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:23:57.525849Z"
+    },
+    {
+      "fingerprint": "5a5be2b2b49f8edd254bfefb8c55f5db4e182a8919144a1c561d0f2e846ba063",
+      "rule_id": "DATA-001",
+      "file_path": "internal/interfaces/mcp/policy_middleware_test.go",
+      "severity": "medium",
+      "reason": "Reviewed false positive: synthetic example email/name fixtures in *_test.go files (example.com addresses), not real personal data.",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:23:57.525849Z"
+    },
+    {
+      "fingerprint": "9e95134ac1c8b798753149099ae3b7abbd95f42f40c2702f5689f881815302af",
+      "rule_id": "DATA-001",
+      "file_path": "internal/interfaces/mcp/server_coverage_test.go",
+      "severity": "medium",
+      "reason": "Reviewed false positive: synthetic example email/name fixtures in *_test.go files (example.com addresses), not real personal data.",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:23:57.525849Z"
+    },
+    {
+      "fingerprint": "68b462ae910392b1f8934ff2d3666cffcfad913d79fc54d1d41f15f4bca71717",
+      "rule_id": "DATA-001",
+      "file_path": "internal/interfaces/mcp/server_coverage_test.go",
+      "severity": "medium",
+      "reason": "Reviewed false positive: synthetic example email/name fixtures in *_test.go files (example.com addresses), not real personal data.",
+      "owner": "felixgeelhaar",
+      "created_at": "2026-11-15T10:23:57.525849Z"
     }
   ]
 }
